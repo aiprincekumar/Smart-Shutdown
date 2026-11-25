@@ -121,17 +121,17 @@ All batch files pass through CLI flags and accept `--no-pause` to skip pause pro
 
 | Launcher | Underlying Target | Mode & Behavior |
 | :--- | :--- | :--- |
-| [Smart_Shutdown.bat](Smart_Shutdown.bat) | [smart_shutdown.py](smart_shutdown.py) (`--gui`) | Direct Unified GUI; forwards CLI flags |
-| [launchers/<wbr>00_Quick_<wbr>30s_Real_<wbr>Test_Mode.bat](launchers/00_Quick_30s_Real_Test_Mode.bat) | [scripts/<wbr>00_quick_<wbr>30s_real_<wbr>test_mode.py](scripts/00_quick_30s_real_test_mode.py) | Mode 0: `30s` live (`10s` idle/close, shutdown) |
-| [launchers/<wbr>01_Production_<wbr>Monitor_<wbr>5Min.bat](launchers/01_Production_Monitor_5Min.bat) | [scripts/<wbr>01_production_<wbr>monitor_<wbr>5min.py](scripts/01_production_monitor_5min.py) | Mode 1: `5m` (`300s`) countdown (`60s` idle) |
-| [launchers/<wbr>02_Production_<wbr>Monitor_<wbr>10Min.bat](launchers/02_Production_Monitor_10Min.bat) | [scripts/<wbr>02_production_<wbr>monitor_<wbr>10min.py](scripts/02_production_monitor_10min.py) | Mode 2: `10m` (`600s`) countdown (`60s` idle) |
-| [launchers/<wbr>03_Safe_<wbr>Test_Dry_<wbr>Run.bat](launchers/03_Safe_Test_Dry_Run.bat) | [scripts/<wbr>03_safe_<wbr>test_dry_<wbr>run.py](scripts/03_safe_test_dry_run.py) | Mode 3: `30s` dry-run (`10s` idle, no close/power) |
-| [launchers/<wbr>04_Immediate_<wbr>GUI_Preview_<wbr>Test.bat](launchers/04_Immediate_GUI_Preview_Test.bat) | [scripts/<wbr>04_immediate_<wbr>gui_preview_<wbr>test.py](scripts/04_immediate_gui_preview_test.py) | Mode 4: `20s` GUI & chime preview (`dry_run=True`) |
-| [launchers/<wbr>05_Single_<wbr>Detection_<wbr>Status_Check.bat](launchers/05_Single_Detection_Status_Check.bat) | [scripts/<wbr>05_single_<wbr>detection_<wbr>status_check.py](scripts/05_single_detection_status_check.py) | Mode 5: One-shot Antigravity status check |
-| [launchers/<wbr>06_Cancel_<wbr>or_Exit_<wbr>Monitor.bat](launchers/06_Cancel_or_Exit_Monitor.bat) | [scripts/<wbr>06_cancel_<wbr>or_exit_<wbr>monitor.py](scripts/06_cancel_or_exit_monitor.py) | Mode 6: `shutdown /a`, clean lock, stop monitor |
-| [launchers/<wbr>07_Toggle_<wbr>Windows_Boot_<wbr>Startup.bat](launchers/07_Toggle_Windows_Boot_Startup.bat) | [scripts/<wbr>07_toggle_<wbr>windows_boot_<wbr>startup.py](scripts/07_toggle_windows_boot_startup.py) | Mode 7: Toggle `Smart_Shutdown.lnk` in Startup |
-| [launchers/<wbr>08_Preview_<wbr>Settings_<wbr>GUI.bat](launchers/08_Preview_Settings_GUI.bat) | [scripts/<wbr>preview_<wbr>settings_<wbr>gui.py](scripts/preview_settings_gui.py) | Mode 8: Standalone Settings GUI preview |
-| [launchers/<wbr>09_Preview_<wbr>Countdown_<wbr>Overlay.bat](launchers/09_Preview_Countdown_Overlay.bat) | [scripts/<wbr>preview_<wbr>countdown_<wbr>overlay.py](scripts/preview_countdown_overlay.py) | Mode 9: Standalone `20s` overlay preview |
+| [Smart_Shutdown.bat](Smart_Shutdown.bat) | [smart_shutdown.py](smart_shutdown.py) (`--gui`) | Unified GUI (default) |
+| [00_Quick_30s_Real_Test_Mode.bat](launchers/00_Quick_30s_Real_Test_Mode.bat) | [00_quick_30s_real_test_mode.py](scripts/00_quick_30s_real_test_mode.py) | 30s real shutdown |
+| [01_Production_Monitor_5Min.bat](launchers/01_Production_Monitor_5Min.bat) | [01_production_monitor_5min.py](scripts/01_production_monitor_5min.py) | 5m prod countdown |
+| [02_Production_Monitor_10Min.bat](launchers/02_Production_Monitor_10Min.bat) | [02_production_monitor_10min.py](scripts/02_production_monitor_10min.py) | 10m prod countdown |
+| [03_Safe_Test_Dry_Run.bat](launchers/03_Safe_Test_Dry_Run.bat) | [03_safe_test_dry_run.py](scripts/03_safe_test_dry_run.py) | 30s safe dry-run |
+| [04_Immediate_GUI_Preview_Test.bat](launchers/04_Immediate_GUI_Preview_Test.bat) | [04_immediate_gui_preview_test.py](scripts/04_immediate_gui_preview_test.py) | 20s GUI chime preview |
+| [05_Single_Detection_Status_Check.bat](launchers/05_Single_Detection_Status_Check.bat) | [05_single_detection_status_check.py](scripts/05_single_detection_status_check.py) | One-shot AI status |
+| [06_Cancel_or_Exit_Monitor.bat](launchers/06_Cancel_or_Exit_Monitor.bat) | [06_cancel_or_exit_monitor.py](scripts/06_cancel_or_exit_monitor.py) | Abort & stop monitor |
+| [07_Toggle_Windows_Boot_Startup.bat](launchers/07_Toggle_Windows_Boot_Startup.bat) | [07_toggle_windows_boot_startup.py](scripts/07_toggle_windows_boot_startup.py) | Toggle boot startup |
+| [08_Preview_Settings_GUI.bat](launchers/08_Preview_Settings_GUI.bat) | [preview_settings_gui.py](scripts/preview_settings_gui.py) | Settings GUI preview |
+| [09_Preview_Countdown_Overlay.bat](launchers/09_Preview_Countdown_Overlay.bat) | [preview_countdown_overlay.py](scripts/preview_countdown_overlay.py) | 20s overlay preview |
 
 ### Key CLI Flags (`smart_shutdown.py`)
 
