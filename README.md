@@ -42,19 +42,47 @@
 
 ## Architecture & Lifecycle
 
-```mermaid
-flowchart TD
-    A["Monitor Physical Input (Win32 GetLastInputInfo)"] -->|"Idle >= Threshold (Default 60s)"| B["Evaluate AI Sessions & System Inhibitors"]
-    B -->|"AI Working or Waiting Prompt (Input)"| C["Hold Countdown (TranscriptSentinel + WaitingGate)"]
-    B -->|"CPU >= 15.0% / Net >= 50.0 KB/s / WASAPI Audio"| D["Inhibited (Unless Bypassed on Dashboard)"]
-    C --> B
-    D --> B
-    B -->|"Eligible (AI Ready + No Inhibitors)"| E["Countdown Active (Cockpit & 220x65 Mini HUD)"]
-    E -->|"Physical Input Detected"| A
-    E -->|"Remaining <= Grace Window (Default 30s)"| F["Pre-Shutdown App Close (WM_CLOSE + Target Filter)"]
-    F -->|"Timer Reaches 00:00"| G{"Execution Mode?"}
-    G -->|"Live or Demo 30s"| H["Dispatch Power Action (Shutdown / Hibernate / Sleep / Lock)"]
-    G -->|"Simulation or Demo 10s"| I["Dry-Run Log Only & Auto-Reset to Idle"]
+```text
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ 1. Monitor Physical Input (Win32 GetLastInputInfo)                   │
+  └───────────────────┬──────────────────────────────────▲───────────────┘
+                      │ Idle >= Threshold (Default 60s)  │ Physical Input
+                      ▼                                  │ Detected
+  ┌──────────────────────────────────────────────────┐   │
+  │ 2. Evaluate AI Sessions & System Inhibitors      │◄──┼───────┐
+  └──┬──────────────────┬─────────────────────────┬──┘   │       │
+     │ AI Working /     │ CPU >= 15.0%            │      │       │
+     │ Waiting Prompt   │ Net >= 50.0 KB/s        │      │       │
+     ▼                  │ WASAPI Audio            │      │       │
+  ┌─────────────────┐   ▼                         │      │       │
+  │ Hold Countdown  │ ┌────────────────────────┐  │      │       │
+  │ Transcript +    │ │ Inhibited              │  │      │       │
+  │ WaitingGate     │ │ (Unless Bypassed)      │  │      │       │
+  └────────┬────────┘ └───────────┬────────────┘  │      │       │
+           └──────────────────────┴───────────────┼──────┼───────┘
+                                                  │      │
+     Eligible (AI Ready + No Inhibitors)          │      │
+     ┌────────────────────────────────────────────┘      │
+     ▼                                                   │
+  ┌──────────────────────────────────────────────────┐   │
+  │ 3. Countdown Active (Cockpit & 220x65 Mini HUD)  ├───┘
+  └───────────────────┬──────────────────────────────┘
+                      │ Remaining <= Grace Window (Default 30s)
+                      ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ 4. Pre-Shutdown App Close (WM_CLOSE + Target Filter)                 │
+  └───────────────────┬──────────────────────────────────────────────────┘
+                      │ Timer Reaches 00:00
+                      ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ 5. Execution Mode?                                                   │
+  ├─────────────────────────────────┬────────────────────────────────────┤
+  │ Live / Demo 30s                 │ Simulation / Demo 10s              │
+  ▼                                 ▼
+  ┌───────────────────────────────┐ ┌────────────────────────────────────┐
+  │ Dispatch Power Action         │ │ Dry-Run Log Only                   │
+  │ Shutdown/Hibernate/Sleep/Lock │ │ & Auto-Reset to Idle               │
+  └───────────────────────────────┘ └────────────────────────────────────┘
 ```
 
 ---
@@ -93,33 +121,33 @@ All batch files pass through CLI flags and accept `--no-pause` to skip pause pro
 
 | Launcher | Underlying Target | Mode & Behavior |
 | :--- | :--- | :--- |
-| `Smart_Shutdown.bat` | `smart_shutdown.py --gui` | Direct Unified GUI launcher; forwards flags (`!FORWARD_ARGS!`) |
-| `launchers/00_Quick_30s_Real_Test_Mode.bat` | `scripts/00_quick_30s_real_test_mode.py` | Mode 0 — `30s` live countdown (`10s` idle, app close at `T-10s`, real shutdown) |
-| `launchers/01_Production_Monitor_5Min.bat` | `scripts/01_production_monitor_5min.py` | Mode 1 — `5m` (`300s`) legacy production countdown (`60s` idle buffer) |
-| `launchers/02_Production_Monitor_10Min.bat` | `scripts/02_production_monitor_10min.py` | Mode 2 — `10m` (`600s`) legacy production countdown (`60s` idle buffer) |
-| `launchers/03_Safe_Test_Dry_Run.bat` | `scripts/03_safe_test_dry_run.py` | Mode 3 — `30s` safe dry-run monitor (`10s` idle buffer, no app close/shutdown) |
-| `launchers/04_Immediate_GUI_Preview_Test.bat` | `scripts/04_immediate_gui_preview_test.py` | Mode 4 — `20s` immediate countdown GUI & chime preview (`dry_run=True`) |
-| `launchers/05_Single_Detection_Status_Check.bat` | `scripts/05_single_detection_status_check.py` | Mode 5 — One-shot Antigravity session status check and exit |
-| `launchers/06_Cancel_or_Exit_Monitor.bat` | `scripts/06_cancel_or_exit_monitor.py` | Mode 6 — Run `shutdown /a`, clean lock file, and stop background monitor |
-| `launchers/07_Toggle_Windows_Boot_Startup.bat` | `scripts/07_toggle_windows_boot_startup.py` | Mode 7 — Toggle `Smart_Shutdown.lnk` in Windows Startup folder |
-| `launchers/08_Preview_Settings_GUI.bat` | `scripts/preview_settings_gui.py` | Mode 8 — Standalone Fluent Dark Settings window preview |
-| `launchers/09_Preview_Countdown_Overlay.bat` | `scripts/preview_countdown_overlay.py` | Mode 9 — Standalone `20s` `HWND_TOPMOST` `CountdownOverlay` preview |
+| [Smart_Shutdown.bat](Smart_Shutdown.bat) | [smart_shutdown.py](smart_shutdown.py) (`--gui`) | Direct Unified GUI; forwards CLI flags |
+| [launchers/<wbr>00_Quick_<wbr>30s_Real_<wbr>Test_Mode.bat](launchers/00_Quick_30s_Real_Test_Mode.bat) | [scripts/<wbr>00_quick_<wbr>30s_real_<wbr>test_mode.py](scripts/00_quick_30s_real_test_mode.py) | Mode 0: `30s` live (`10s` idle/close, shutdown) |
+| [launchers/<wbr>01_Production_<wbr>Monitor_<wbr>5Min.bat](launchers/01_Production_Monitor_5Min.bat) | [scripts/<wbr>01_production_<wbr>monitor_<wbr>5min.py](scripts/01_production_monitor_5min.py) | Mode 1: `5m` (`300s`) countdown (`60s` idle) |
+| [launchers/<wbr>02_Production_<wbr>Monitor_<wbr>10Min.bat](launchers/02_Production_Monitor_10Min.bat) | [scripts/<wbr>02_production_<wbr>monitor_<wbr>10min.py](scripts/02_production_monitor_10min.py) | Mode 2: `10m` (`600s`) countdown (`60s` idle) |
+| [launchers/<wbr>03_Safe_<wbr>Test_Dry_<wbr>Run.bat](launchers/03_Safe_Test_Dry_Run.bat) | [scripts/<wbr>03_safe_<wbr>test_dry_<wbr>run.py](scripts/03_safe_test_dry_run.py) | Mode 3: `30s` dry-run (`10s` idle, no close/power) |
+| [launchers/<wbr>04_Immediate_<wbr>GUI_Preview_<wbr>Test.bat](launchers/04_Immediate_GUI_Preview_Test.bat) | [scripts/<wbr>04_immediate_<wbr>gui_preview_<wbr>test.py](scripts/04_immediate_gui_preview_test.py) | Mode 4: `20s` GUI & chime preview (`dry_run=True`) |
+| [launchers/<wbr>05_Single_<wbr>Detection_<wbr>Status_Check.bat](launchers/05_Single_Detection_Status_Check.bat) | [scripts/<wbr>05_single_<wbr>detection_<wbr>status_check.py](scripts/05_single_detection_status_check.py) | Mode 5: One-shot Antigravity status check |
+| [launchers/<wbr>06_Cancel_<wbr>or_Exit_<wbr>Monitor.bat](launchers/06_Cancel_or_Exit_Monitor.bat) | [scripts/<wbr>06_cancel_<wbr>or_exit_<wbr>monitor.py](scripts/06_cancel_or_exit_monitor.py) | Mode 6: `shutdown /a`, clean lock, stop monitor |
+| [launchers/<wbr>07_Toggle_<wbr>Windows_Boot_<wbr>Startup.bat](launchers/07_Toggle_Windows_Boot_Startup.bat) | [scripts/<wbr>07_toggle_<wbr>windows_boot_<wbr>startup.py](scripts/07_toggle_windows_boot_startup.py) | Mode 7: Toggle `Smart_Shutdown.lnk` in Startup |
+| [launchers/<wbr>08_Preview_<wbr>Settings_<wbr>GUI.bat](launchers/08_Preview_Settings_GUI.bat) | [scripts/<wbr>preview_<wbr>settings_<wbr>gui.py](scripts/preview_settings_gui.py) | Mode 8: Standalone Settings GUI preview |
+| [launchers/<wbr>09_Preview_<wbr>Countdown_<wbr>Overlay.bat](launchers/09_Preview_Countdown_Overlay.bat) | [scripts/<wbr>preview_<wbr>countdown_<wbr>overlay.py](scripts/preview_countdown_overlay.py) | Mode 9: Standalone `20s` overlay preview |
 
 ### Key CLI Flags (`smart_shutdown.py`)
 
 | Flag | Description |
 | :--- | :--- |
 | `--gui` | Launch Unified Fluent Dark Desktop Cockpit (default) |
-| `--mini-hud` | Start in compact `220x65` `HWND_TOPMOST` Mini HUD (`--mini`, `--hud`) |
-| `--no-mini-hud` | Override `mini_hud_on_startup` and open full `780x520` cockpit (`--full-gui`) |
+| `--mini-hud` | Start in `220x65` `HWND_TOPMOST` Mini HUD (`--mini`, `--hud`) |
+| `--no-mini-hud` | Open full `780x520` cockpit, ignoring `mini_hud_on_startup` (`--full-gui`) |
 | `--headless` | Run background monitor without spawning GUI window |
-| `--dry-run` | Safe Simulation mode without closing apps or OS power actions (`--test`) |
-| `--countdown <sec>` | Override countdown (`simulation_timer_sec` in dry-run/Sim, `master_shutdown_timer_min` in Live; default `900s`) |
+| `--dry-run` | Safe Simulation mode; skips app close and OS power (`--test`) |
+| `--countdown <sec>` | Override countdown seconds (Sim or Live timer; default `900s`) |
 | `--idle-buffer <sec>` | Override physical inactivity silence threshold (default `60s`) |
 | `--check-once` | Inspect Antigravity sessions once and exit (`0` complete, `1` active) |
 | `--startup-status` | Show Windows Startup `Smart_Shutdown.lnk` status and configuration |
 | `--enable-startup` | Create `Smart_Shutdown.lnk` in Windows Startup folder (`--mini-hud`) |
-| `--disable-startup` | Remove `Smart_Shutdown.lnk` (and legacy shortcut) from Windows Startup |
+| `--disable-startup` | Remove `Smart_Shutdown.lnk` (and legacy shortcut) from Startup |
 | `--force-close-test` | Print processes/windows targeted at `T-10s` without terminating |
 | `--help` | Print full CLI options, defaults, and usage examples |
 
@@ -183,7 +211,7 @@ All batch files pass through CLI flags and accept `--no-pause` to skip pause pro
 ```
 
 - **Non-Destructive UI Previews:** Test windows safely with [`launchers/04_Immediate_GUI_Preview_Test.bat`](launchers/04_Immediate_GUI_Preview_Test.bat) (`20s` dry-run countdown + alert chime), [`launchers/08_Preview_Settings_GUI.bat`](launchers/08_Preview_Settings_GUI.bat) (Settings window), or [`launchers/09_Preview_Countdown_Overlay.bat`](launchers/09_Preview_Countdown_Overlay.bat) (`20s` `HWND_TOPMOST` overlay).
-- **Adding Screenshots Later:** If you capture local screenshots for forks or releases, place PNG files in an `assets/` folder (omitted from default tracking to keep the repo lean).
+- **Screenshots:** Place local release PNGs in an `assets/` folder (gitignored by default to keep the repo lean).
 
 ---
 
@@ -228,13 +256,13 @@ Smart Shutdown/
   - All batch launchers probe 5 paths in order: `%USERPROFILE%\.local\bin\python.exe`, `python` in `PATH`, `%USERPROFILE%\.venv\Scripts\python.exe`, `%LOCALAPPDATA%\Programs\Python\Python*\python.exe`, and `%ProgramFiles%\Python*\python.exe`.
   - Verify Python `3.10+` has `tkinter` enabled and run `pip install -r requirements.txt`. Pass `--no-pause` to skip batch pause prompts in scripted runs.
 - **Windows Boot Auto-Startup toggle (`Smart_Shutdown.lnk`):**
-  - Creates `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Smart_Shutdown.lnk` targeting `pythonw.exe --mini-hud` (falling back to `sys.executable`), controlled via `launchers/07_Toggle_Windows_Boot_Startup.bat` or `--startup-status` / `--enable-startup` / `--disable-startup` / `--toggle-startup`. Saving in `Settings` triggers `reconcile_startup_shortcut` to keep `.lnk` flags synced.
+  - Creates `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Smart_Shutdown.lnk` targeting `pythonw.exe --mini-hud` (`sys.executable` fallback), managed via `launchers/07_Toggle_Windows_Boot_Startup.bat` or `--startup-status` / `--enable-startup` / `--disable-startup` / `--toggle-startup`. Saving `Settings` runs `reconcile_startup_shortcut` to sync `.lnk` flags.
 - **Countdown blocked or paused by inhibitors:**
   - Triggered when `WASAPI` audio peak `> 0.001`, `CPU >= 15.0%`, `Network >= 50.0 KB/s`, or Antigravity AI is `WORKING` / `WAITING_USER_PROMPT` (`Hybrid` `10m` default gate). Adjust thresholds in `Settings -> Limits` or use **`Bypass Blocks`** on the `Dashboard`.
 - **Stuck background monitor, `smart_shutdown.lock`, or pending OS shutdown:**
-  - Run [`launchers/06_Cancel_or_Exit_Monitor.bat`](launchers/06_Cancel_or_Exit_Monitor.bat) (or `python scripts/06_cancel_or_exit_monitor.py --force`): invokes `shutdown /a`, terminates the non-ancestor PID in `smart_shutdown.lock`, removes `smart_shutdown.lock` (and legacy `auto_shutdown.lock`), and includes an offline batch fallback if Python is missing.
+  - Run [`launchers/06_Cancel_or_Exit_Monitor.bat`](launchers/06_Cancel_or_Exit_Monitor.bat) (or `python scripts/06_cancel_or_exit_monitor.py --force`): calls `shutdown /a`, stops the non-ancestor PID, removes `smart_shutdown.lock` (and `auto_shutdown.lock`), with an offline batch fallback.
 - **Corrupted or missing `smart_shutdown_settings.json`:**
-  - `core/settings_store.py` uses atomic `fsync` saves with `.json.bak` rotation and auto-recovers via `_recover_from_backup` from `smart_shutdown_settings.json.bak` to self-heal the primary file; if neither is valid, Smart Shutdown loads clamped `SettingsConfig` defaults.
+  - `core/settings_store.py` uses atomic `fsync` saves with `.json.bak` rotation and `_recover_from_backup` self-healing; if both fail, clamped `SettingsConfig` defaults load.
 
 ---
 
@@ -242,7 +270,7 @@ Smart Shutdown/
 
 1. **Workflow & Commits:** Fork and branch from `master`; use Conventional Commits (`feat`, `fix`, `docs`, `chore`) compatible with [`cliff.toml`](cliff.toml).
 2. **Code Standards & Security:** Follow Python `3.10+` style, Rule 28 modularity (`< 500` lines / `< 24 KB`), avoid hardcoded secrets or PII, and avoid unverified dependencies outside [`requirements.txt`](requirements.txt).
-3. **Encoding & `.gitattributes`:** Keep `*.bat` as `CRLF` (`BOM=False`), and keep `.py`, `.md`, `.json`, `.js`, `.txt`, `.toml`, `LICENSE`, and dotfiles as `LF` (`BOM=False`, except governed `.agents/rules/` and `changes_log/` files which retain UTF-8 BOM + `LF`).
+3. **Encoding & `.gitattributes`:** Keep `*.bat` as `CRLF` (`BOM=False`), and `.py`/`.md`/`.json`/`.js`/`.txt`/`.toml`/`LICENSE`/dotfiles as `LF` (`BOM=False`, except governed `.agents/rules/` and `changes_log/` which use UTF-8 BOM + `LF`).
 4. **Pre-PR Checklist:**
    - Syntax & CLI smoke (pass `-B` beside a running daemon): `python -B -m py_compile smart_shutdown.py` and `python -B smart_shutdown.py --help`
    - Safe non-destructive previews: `launchers/03_Safe_Test_Dry_Run.bat`, `launchers/08_Preview_Settings_GUI.bat`, `launchers/09_Preview_Countdown_Overlay.bat`
