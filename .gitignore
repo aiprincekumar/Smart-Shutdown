@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# OS specific & Backups
+Thumbs.db
+Desktop.ini
+*.lock
+*.bak
+
+# Ephemeral Agent Prompts
+temp_prompt/
+
+# Database & Generated Reports
+*.db
+*.db-*
+*.db-wal
+*.db-shm
+**/data/*.db
+**/data/*.db-*
+**/reports/*
+!**/reports/.gitkeep
+
+# Local runtime settings
+smart_shutdown_settings.json
+sentinel_settings.json
+*.tmp

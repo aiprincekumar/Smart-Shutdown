@@ -1,0 +1,20 @@
+{
+  "name": "smart-shutdown",
+  "version": "1.0.0",
+  "description": "Smart Shutdown - Intelligent Windows Inactivity & Power Management Daemon",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "rules:check": "node scripts/check-rules-health.js"
+  },
+  "keywords": [
+    "smart-shutdown",
+    "auto-shutdown",
+    "windows",
+    "power-management",
+    "inactivity",
+    "governance"
+  ],
+  "author": "Atul Verma <aiprincekumar010100@gmail.com>",
+  "license": "MIT"
+}

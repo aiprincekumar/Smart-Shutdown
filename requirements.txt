@@ -1,0 +1,15 @@
+# Smart Shutdown - Python Dependencies
+# Verified via AST third-party audit across smart_shutdown.py, core/, gui/, and scripts/
+
+# Core Required Dependencies
+psutil>=5.9.0
+pillow>=10.0.0
+
+# Optional Windows Feature Dependencies (graceful fallback if omitted)
+# - WASAPI audio stream playback inhibitor (pycaw + comtypes)
+# - Windows notification area / system tray docking (pystray)
+pycaw>=20240210
+comtypes>=1.2.0
+pystray>=0.19.0
+
+# pywin32>=306  # Optional Win32 DPMS fallback (primary Win32 APIs use stdlib ctypes)
