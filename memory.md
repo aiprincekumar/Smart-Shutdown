@@ -19,7 +19,13 @@
 > **Status:** `COMPLETED` (Committed locally on `master` [`origin/master: ahead 1`]; remote push blocked (`exit 128`: interactive GitHub credential prompt disabled); `PID 10280` ran undisturbed through implementation/QA until workspace server restart at `07:40:54` (no longer present afterward); `smart_shutdown.lock`, `logs/smart_shutdown.log`, and untracked `smart_shutdown_settings.json` preserved)  
 > **Sub Manager Heartbeat:** HEALTHY (Continuous Passive Lifecycle Monitor)
 
-### 0.0 Last Completed Milestone: Dashboard Left-Column Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`)
+### 0.0 Last Completed Milestone: Tactile 38px Action Pills (`TASK-DASHBOARD-PILL-TACTILE-38-001`)
+1. **38px Tactile 3D Surface & Sharpened Slate Contrast (`AUTH-MGR-20261126-PILL-TACTILE-QA-002`, `CHG-20261126-011`):**
+   - Upgraded `PillButton` (`gui/components/pill_button.py`, `281` lines, `12,439` B, BOM `True`) with `_PillStyle`, `_apply_crescent_rim()`, and `_render_pill_surface()` (1px shadow, 3D inner top/bottom bevel crescents, pressed 1px depression).
+   - Updated `DashboardView._build_action_grid` (`gui/components/dashboard_view.py`) to `corner_radius=11, height=38`, sharpened slate contrast (`#1F2A3C`/`#2A3950`/`#151D2B`, `#3E5272`/`#5B78A3`/`#344663`), removed unused slate theme imports, and preserved `circular_gauge.py` (`268x268`), `theme.py`, and `right_col`.
+   - Certified `py_compile`, `--help`, offscreen Tk (`780x520` & `720x500` UnifiedApp + standalone, pixel-diff `nb!=hb!=pb`, `tw<bw`, state toggles), `rules:check` 22/22, `gitleaks` 0, and local commit on `master` (offline).
+
+### 0.0b Prior Completed Milestone: Dashboard Left-Column Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`)
 1. **Gauge Scaling, Pill Compaction & Independent QA (`AUTH-MGR-20261126-DASHBOARD-LEFT-QA-003`):**
    - Enlarged `CircularCountdownGauge` (`gui/components/circular_gauge.py`, `232` lines) from `240x240` to `268x268` via `GaugeGeometry`, `_build_gauge_geometry()`, and `_compute_cap_ovals()` (`outer_bbox=(18,18,250,250)` `11px`/`18px` halo, `inner_bbox=(32,32,236,236)` `5px`, `36pt`/`9pt` local fonts; `FONT_BADGE` untouched at `8pt`).
    - Compacted `DashboardView._build_action_grid` (`gui/components/dashboard_view.py`, `372` lines) to `expand=False`, `weight=0`, `padx=2`, `5/6/6` column weights (`btn_w=90/110`), `height=36`, `corner_radius=10`, `sticky="ew"`, and added `padx=0, pady=0` + height-drift guard in `PillButton` (`gui/components/pill_button.py`, `247` lines) with `0` edits to `right_col`.
@@ -134,6 +140,7 @@ Smart Shutdown/ (Product: Smart Shutdown)
 | 020 | Public Repo Polish (`TASK-PUBLIC-GITHUB-POLISH-001`) | Stale README, missing packaging/EOL rules, tracked local config | Upgrade `README.md`, track `requirements`/`LICENSE`/`.gitattributes`, untrack settings, `LF` EOLs | Public GitHub-ready repo; PID `10280` kept | Polish | `ls-files --eol`, `rules:check` 22/22, `gitleaks` 0 |
 | 021 | README Showcase & FAQ (`TASK-README-ENHANCE-002`) | Lacked ASCII UI layout preview, Troubleshooting FAQ, and Contributing guide | Verify code facts; add `UI Preview`, `Troubleshooting & FAQ`, `Contributing`; validate GitHub slugs & `< 22 KB`; log `CHG-20261126-009` | Self-service onboarding, exact anchors & clean docs | Docs | Anchors PASS, `< 22 KB`, `rules:check` 22/22, `gitleaks` 0 |
 | 022 | Dashboard Left Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`) | `240px` gauge left vertical slack; `expand=True` & `tk.Button` pad ratcheted pills `36->42px`; uniform cols clipped `Shutdown Now` at `720x500` | `GaugeGeometry(268)`, `5/6/6` cols (`90/110`), `height=36`, `padx=0, pady=0`, `_on_configure` height-drift guard | Balanced `268x268` gauge + exact `36px` pills (`tw<bw`) at `780x520` & `720x500`; `right_col` untouched | Phases 1-2 & QA | Offscreen Tk PASS, Rule 28 PASS, `rules:check` 22/22, `gitleaks` 0 |
+| 023 | Tactile 38px Pill Buttons (`TASK-DASHBOARD-PILL-TACTILE-38-001`) | Flat `36px` (`r=10`) pills lacked 3D depth & slate contrast | `_PillStyle`, `_apply_crescent_rim()`, `_render_pill_surface()`, `corner_radius=11, height=38`, sharpened `#1F2A3C`/`#3E5272` slate | Distinct 3D normal/hover/pressed surfaces at `38px` (`tw<bw`); `268x268` gauge & `right_col` untouched | Impl & QA | Offscreen Tk & pixel-diff PASS, Rule 28 PASS, `rules:check` 22/22, `gitleaks` 0 |
 
 ---
 

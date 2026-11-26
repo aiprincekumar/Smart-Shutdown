@@ -6,6 +6,16 @@
 
 ---
 
+## [CHG-20261126-011] - 2026-11-26 08:03:37
+- **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
+- **Initiative:** `TASK-DASHBOARD-PILL-TACTILE-38-001` (`AUTH-MGR-20261126-PILL-TACTILE-QA-002`)
+- **Entry File:** [`change_CHG-20261126-011_08-03-37.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-011_08-03-37.md)
+- **Target Scope:** `gui/components/pill_button.py`, `gui/components/dashboard_view.py`
+- **Summary:** Upgraded 2x3 action pill buttons to a `38px` tactile 3D surface (`_PillStyle`, `_apply_crescent_rim()`, `_render_pill_surface()`, 1px shadow + top/bottom inner bevels + pressed 1px depression; `281` lines / `12,439` B) and updated `_build_action_grid` to `corner_radius=11, height=38` with sharpened slate contrast (`#1F2A3C`/`#2A3950`/`#151D2B`, `#3E5272`/`#5B78A3`/`#344663`) and unused `BG_BUTTON_SLATE`/`BORDER_BUTTON_SLATE` import cleanup (`0` edits to `circular_gauge.py`, `theme.py`, `right_col`, `core/`); logged 5-tier `changes_log/` + `memory.md` (`S.No 023`) and committed locally via isolated `GIT_INDEX_FILE` on `master` (preserving dirty-tree `TASK-DASHBOARD-HEALTH-CARDS-001` files).
+- **Verification:** `py_compile` & `--help` **PASS**, offscreen Tk (`UnifiedSentinelApp` & standalone `DashboardView`, `780x520` & `720x500`, pixel-diff `nb!=hb!=pb`, `tw<bw`, `268x268` gauge, state toggles) **PASS**, Rule 28 & BOM **PASS**, `npm run rules:check` **22/22 PASS**, `gitleaks` (git + `--no-git`) **0** leaks.
+
+---
+
 ## [CHG-20261126-010] - 2026-11-26 06:58:36
 - **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
 - **Initiative:** `TASK-DASHBOARD-LEFT-LAYOUT-001` (`AUTH-MGR-20261126-DASHBOARD-LEFT-QA-003`)

@@ -11,7 +11,6 @@ from typing import Optional, Callable, Dict, Any, Tuple
 from gui.theme import (
     BG_BASE, BG_SURFACE, BG_SUBSURFACE, BG_HOVER, BORDER_MUTED,
     BORDER_CARD, BORDER_CARD_HOVER, TRACK_RING,
-    BG_BUTTON_SLATE, BORDER_BUTTON_SLATE,
     BG_BUTTON_ABORT, BORDER_BUTTON_ABORT, TEXT_BUTTON_ABORT,
     BG_BUTTON_BYPASS, BORDER_BUTTON_BYPASS, TEXT_BUTTON_BYPASS,
     BG_BUTTON_SHUTDOWN, BORDER_BUTTON_SHUTDOWN, TEXT_BUTTON_SHUTDOWN,
@@ -151,9 +150,9 @@ class DashboardView(tk.Frame):
         self.grid_frame.grid_rowconfigure(1, weight=0)
 
         btn_specs = [
-            ("btn_pause", "|| Pause", self._handle_pause, BG_BUTTON_SLATE, "#26344B", "#151E2B", BORDER_BUTTON_SLATE, "#3E5272", "#3E5272", "#FFFFFF", 0, 0),
-            ("btn_snooze", "zᶻ +15m Snooze", self._handle_snooze, BG_BUTTON_SLATE, "#26344B", "#151E2B", BORDER_BUTTON_SLATE, "#3E5272", "#3E5272", "#FFFFFF", 0, 1),
-            ("btn_monitor", "🖥 Toggle Monitor", self._handle_toggle_monitor, BG_BUTTON_SLATE, "#26344B", "#151E2B", BORDER_BUTTON_SLATE, "#3E5272", "#3E5272", "#FFFFFF", 0, 2),
+            ("btn_pause", "|| Pause", self._handle_pause, "#1F2A3C", "#2A3950", "#151D2B", "#3E5272", "#5B78A3", "#344663", "#FFFFFF", 0, 0),
+            ("btn_snooze", "zᶻ +15m Snooze", self._handle_snooze, "#1F2A3C", "#2A3950", "#151D2B", "#3E5272", "#5B78A3", "#344663", "#FFFFFF", 0, 1),
+            ("btn_monitor", "🖥 Toggle Monitor", self._handle_toggle_monitor, "#1F2A3C", "#2A3950", "#151D2B", "#3E5272", "#5B78A3", "#344663", "#FFFFFF", 0, 2),
             ("btn_abort", "✕ Abort", self._handle_abort, BG_BUTTON_ABORT, "#352920", "#181310", BORDER_BUTTON_ABORT, "#F59E0B", "#D97706", TEXT_BUTTON_ABORT, 1, 0),
             ("btn_bypass", "🛡 Bypass Blocks", self._handle_bypass_toggle, BG_BUTTON_BYPASS, "#1A3542", "#0D1C22", BORDER_BUTTON_BYPASS, "#22D3EE", "#0891B2", TEXT_BUTTON_BYPASS, 1, 1),
             ("btn_shutdown", "⚡ Shutdown Now", self._handle_shutdown_now, BG_BUTTON_SHUTDOWN, "#451A20", "#200D10", BORDER_BUTTON_SHUTDOWN, "#F87171", "#EF4444", TEXT_BUTTON_SHUTDOWN, 1, 2),
@@ -162,7 +161,7 @@ class DashboardView(tk.Frame):
             btn_w = 90 if c == 0 else 110
             btn = PillButton(
                 self.grid_frame, text=txt, command=cmd, normal_bg=bg, hover_bg=hbg, pressed_bg=pbg,
-                border_color=bdr, hover_border=hbdr, pressed_border=pbdr, fg=fg, parent_bg=BG_BASE, width=btn_w, corner_radius=10, height=36,
+                border_color=bdr, hover_border=hbdr, pressed_border=pbdr, fg=fg, parent_bg=BG_BASE, width=btn_w, corner_radius=11, height=38,
             )
             btn.grid(row=r, column=c, padx=2, pady=3, sticky="ew")
             setattr(self, attr, btn)

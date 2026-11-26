@@ -7,13 +7,61 @@ Developer: Atul Verma (aiprincekumar / aiprincekumar010100@gmail.com)
 """
 
 import tkinter as tk
-from typing import Optional, Callable, Any
-from PIL import Image, ImageDraw, ImageTk
+from dataclasses import dataclass
+from typing import Optional, Callable, Any, Tuple
+from PIL import Image, ImageColor, ImageDraw, ImageTk
 
 from gui.theme import (
     BG_BASE, BG_SUBSURFACE, BG_HOVER, BORDER_MUTED,
     TEXT_PRIMARY, FONT_BODY_BOLD,
 )
+
+
+@dataclass(frozen=True)
+class _PillStyle:
+    """Immutable rendering style configuration for a PillButton state."""
+
+    bg_color: str
+    border_color: str
+    is_hover: bool = False
+    is_pressed: bool = False
+
+
+def _apply_crescent_rim(
+    base: Image.Image, geom: Tuple[int, int, int, int, int], color: Tuple[int, int, int, int], shift_y: int
+) -> Image.Image:
+    """Composite an anti-aliased top or bottom inner bevel crescent onto base."""
+    ix0, iy0, ix1, iy1, ir = geom
+    layer = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    draw.rounded_rectangle([ix0, iy0, ix1, iy1], radius=ir, fill=color)
+    draw.rounded_rectangle([ix0, iy0 + shift_y, ix1, iy1 + shift_y], radius=ir, fill=(0, 0, 0, 0))
+    return Image.alpha_composite(base, layer)
+
+
+def _render_pill_surface(
+    size: Tuple[int, int], parent_bg: str, box: Tuple[int, int, int, int], render_cfg: Tuple[int, int, _PillStyle]
+) -> Image.Image:
+    """Render outer shadow, bordered pill face, and 3D inner bevels on RGBA surface."""
+    r, scale, style = render_cfg
+    x0, y0, x1, y1 = box
+    img = Image.new("RGBA", size, (*ImageColor.getrgb(parent_bg), 255))
+    if not style.is_pressed:
+        shd = Image.new("RGBA", size, (0, 0, 0, 0))
+        alpha = 170 if style.is_hover else 150
+        ImageDraw.Draw(shd).rounded_rectangle([x0, y0 + scale, x1, y1 + scale], radius=r, fill=(0, 0, 0, alpha))
+        img = Image.alpha_composite(img, shd)
+    face = Image.new("RGBA", size, (0, 0, 0, 0))
+    ImageDraw.Draw(face).rounded_rectangle(
+        [x0, y0, x1, y1], radius=r, fill=style.bg_color, outline=style.border_color, width=scale
+    )
+    img = Image.alpha_composite(img, face)
+    geom = (x0 + scale, y0 + scale, x1 - scale, y1 - scale, max(2, r - scale))
+    if style.is_pressed:
+        return _apply_crescent_rim(img, geom, (0, 0, 0, 105), scale + 1)
+    top_a, bot_a = (62, 75) if style.is_hover else (42, 65)
+    img = _apply_crescent_rim(img, geom, (255, 255, 255, top_a), scale)
+    return _apply_crescent_rim(img, geom, (0, 0, 0, bot_a), -scale)
 
 
 class PillButton(tk.Button):
@@ -119,24 +167,16 @@ class PillButton(tk.Button):
         fg: Optional[str] = None,
     ) -> None:
         """Dynamically update pill color profiles with live re-rendering."""
-        if normal_bg is not None:
-            self.normal_bg = normal_bg
-        if hover_bg is not None:
-            self._hover_bg = hover_bg
-        if pressed_bg is not None:
-            self.pressed_bg = pressed_bg
+        if normal_bg is not None: self.normal_bg = normal_bg
+        if hover_bg is not None: self._hover_bg = hover_bg
+        if pressed_bg is not None: self.pressed_bg = pressed_bg
         if border_color is not None:
             self.border_color = border_color
-            if hover_border is None:
-                self.hover_border = border_color
-            if pressed_border is None:
-                self.pressed_border = border_color
-        if hover_border is not None:
-            self.hover_border = hover_border
-        if pressed_border is not None:
-            self.pressed_border = pressed_border
-        if fg is not None:
-            super().configure(fg=fg, activeforeground=fg)
+            if hover_border is None: self.hover_border = border_color
+            if pressed_border is None: self.pressed_border = border_color
+        if hover_border is not None: self.hover_border = hover_border
+        if pressed_border is not None: self.pressed_border = pressed_border
+        if fg is not None: super().configure(fg=fg, activeforeground=fg)
 
         if self._curr_w > 10 and self._curr_h > 10:
             self._render_pills(self._curr_w, self._curr_h)
@@ -174,23 +214,17 @@ class PillButton(tk.Button):
 
     config = configure
 
-    def _create_pill_image(self, w: int, h: int, bg_color: str, border_col: str) -> Optional[ImageTk.PhotoImage]:
-        """Generate anti-aliased rounded rectangle pill image using 3x supersampling."""
+    def _create_pill_image(self, w: int, h: int, style: _PillStyle) -> Optional[ImageTk.PhotoImage]:
+        """Generate tactile 3D anti-aliased rounded pill image using 3x supersampling."""
         try:
             scale = 3
             sw, sh = w * scale, h * scale
-            img = Image.new("RGB", (sw, sh), self.parent_bg)
-            draw = ImageDraw.Draw(img)
             r = min(self.corner_radius, max(2, (h - 2) // 2)) * scale
-            pad = scale // 2
-            draw.rounded_rectangle(
-                [pad, pad, sw - 1 - pad, sh - 1 - pad],
-                radius=r,
-                fill=bg_color,
-                outline=border_col,
-                width=max(1, scale),
-            )
-            resized = img.resize((w, h), Image.Resampling.LANCZOS)
+            pad = 1
+            y_off = scale if style.is_pressed else 0
+            box = (pad, pad + y_off, sw - 1 - pad, sh - 1 - pad - (0 if style.is_pressed else scale))
+            img = _render_pill_surface((sw, sh), self.parent_bg, box, (r, scale, style))
+            resized = img.convert("RGB").resize((w, h), Image.Resampling.LANCZOS)
             return ImageTk.PhotoImage(resized, master=self)
         except Exception:
             return None
@@ -198,9 +232,9 @@ class PillButton(tk.Button):
     def _render_pills(self, w: int, h: int) -> None:
         """Re-render normal, hover, and pressed pill state images."""
         self._curr_w, self._curr_h = max(20, w), max(20, h)
-        self._normal_photo = self._create_pill_image(self._curr_w, self._curr_h, self.normal_bg, self.border_color)
-        self._hover_photo = self._create_pill_image(self._curr_w, self._curr_h, self._hover_bg, self.hover_border)
-        self._pressed_photo = self._create_pill_image(self._curr_w, self._curr_h, self.pressed_bg, self.pressed_border)
+        self._normal_photo = self._create_pill_image(self._curr_w, self._curr_h, _PillStyle(self.normal_bg, self.border_color))
+        self._hover_photo = self._create_pill_image(self._curr_w, self._curr_h, _PillStyle(self._hover_bg, self.hover_border, is_hover=True))
+        self._pressed_photo = self._create_pill_image(self._curr_w, self._curr_h, _PillStyle(self.pressed_bg, self.pressed_border, is_pressed=True))
 
     def _apply_photo(self, photo: Optional[ImageTk.PhotoImage]) -> None:
         """Apply PhotoImage to button and retain python reference to prevent GC."""
