@@ -2,6 +2,15 @@
 
 > **Archive Index:** Entries from `2026-11-01` to `2026-11-24` (`CHG-20261101-001` .. `CHG-20261124-006`) archived in [`master_changes_log_archive_2026-11.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/master/master_changes_log_archive_2026-11.md).
 
+## [CHG-20261126-012] - 2026-11-26 08:11:44
+- **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
+- **Entry File:** [`change_CHG-20261126-012_08-11-44.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-012_08-11-44.md)
+- **Target Scope:** `core/coordinator.py`, `core/coordinator_helpers.py`, `core/telemetry_collector.py`, `gui/app_event_bridge.py`, `gui/app_event_handlers.py`, `gui/components/dashboard_view.py`, `gui/components/health_summary.py`, `gui/unified_app.py`, `tests/*`
+- **Summary:** Added `Audio Stream` and `Process Tree` floating health cards to `DashboardView` (`TASK-DASHBOARD-HEALTH-CARDS-001` / `AUTH-MGR-20261126-DASHBOARD-HEALTH-QA-001`): extracted pure 6-card formatters (`gui/components/health_summary.py`, `234` L / `9,815` B), `core/coordinator_helpers.py` (`133` L), and `gui/app_event_handlers.py` (`126` L); tightened card padding (`padx=10, pady=5`, outer `pady=2`) while preserving `268x268` gauge and `38px` (`r=11`) pills; added `normalize_telemetry_defaults` and end-to-end 5-field audio/tree sync & resets; authored `tests/` (`3` files), synced `memory.md` (`S.No 024`) + 5-tier logs, and pruned `temp_prompt/`.
+- **Verification:** `python -B -m unittest discover -s tests -v` **15/15 PASSED** (`5.426s`, Exit 0), offscreen Tk `780x520` & `720x500` PASS (`max_reqw=329<=335`, `reqh=306<=407/427`, `268x268` gauge, `38px` pills, `tw<bw`), Rule 28 & BOM **11/11 PASS**, `--help` Exit 0, `rules:check` 22/22, `gitleaks` 0 leaks.
+
+---
+
 ## [CHG-20261126-011] - 2026-11-26 08:03:37
 - **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
 - **Entry File:** [`change_CHG-20261126-011_08-03-37.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-011_08-03-37.md)

@@ -12,34 +12,31 @@
 
 > **Document Type:** Live Dynamic Execution State Machine Ledger  
 > **Active Project:** `Smart Shutdown` (Workspace path: `c:\Users\Atul Verma\Desktop\Smart Shutdown`)  
-> **Active Task ID:** `TASK-DASHBOARD-LEFT-LAYOUT-001` (Dashboard Left-Column Gauge Enlargement & Action Pill Compaction)  
-> **Authorization Token:** `AUTH-MGR-20261126-DASHBOARD-LEFT-QA-003`  
-> **Current Gate State:** `COMPLETED` (Phase 1 QA PASS + 5-Tier `changes_log/` + `memory.md` + Local Commit (`origin/master: ahead 1`; push blocked exit 128))  
-> **Test Status:** Offscreen Tk `780x520` & `720x500` **PASS** (`268x268` gauge, `36px` pills, `tw<bw`) | Rule 28 **PASS** | `rules:check` **22/22** | `gitleaks` **0** | `PID 10280` kept until server restart `07:40:54`  
-> **Status:** `COMPLETED` (Committed locally on `master` [`origin/master: ahead 1`]; remote push blocked (`exit 128`: interactive GitHub credential prompt disabled); `PID 10280` ran undisturbed through implementation/QA until workspace server restart at `07:40:54` (no longer present afterward); `smart_shutdown.lock`, `logs/smart_shutdown.log`, and untracked `smart_shutdown_settings.json` preserved)  
+> **Active Task ID:** `TASK-DASHBOARD-HEALTH-CARDS-001` (Add Audio Stream & Process Tree Cards to Dashboard Informative Live Health Summary)  
+> **Authorization Token:** `AUTH-MGR-20261126-DASHBOARD-HEALTH-QA-001`  
+> **Current Gate State:** `COMPLETED`  
+> **Phase:** Phase 3 Complete (Independent QA Grade A+, 5-Tier `changes_log/` `CHG-20261126-012`, Ephemeral Prune & Rule 15 Sync)  
+> **Test Status:** `python -B -m unittest discover -s tests -v` -> **15/15 PASSED** (`5.426s`, 0 skipped, Exit 0); Offscreen Tk (`780x520` & `720x500`) **PASS**; Rule 28 & BOM **11/11 PASS**; `--help` Exit 0; `rules:check` **22/22**; `gitleaks` **0**  
+> **Status:** `COMPLETED` (Live daemon active per `smart_shutdown.lock`: PID `15284` started `08:08:33` after prior `PID 9700` restarted before Phase 3 QA; `logs/smart_shutdown.log`, `smart_shutdown_settings.json`, and untracked `installer/RELEASE_v1.0.0.md` preserved)  
 > **Sub Manager Heartbeat:** HEALTHY (Continuous Passive Lifecycle Monitor)
 
-### 0.0 Last Completed Milestone: Tactile 38px Action Pills (`TASK-DASHBOARD-PILL-TACTILE-38-001`)
-1. **38px Tactile 3D Surface & Sharpened Slate Contrast (`AUTH-MGR-20261126-PILL-TACTILE-QA-002`, `CHG-20261126-011`):**
-   - Upgraded `PillButton` (`gui/components/pill_button.py`, `281` lines, `12,439` B, BOM `True`) with `_PillStyle`, `_apply_crescent_rim()`, and `_render_pill_surface()` (1px shadow, 3D inner top/bottom bevel crescents, pressed 1px depression).
-   - Updated `DashboardView._build_action_grid` (`gui/components/dashboard_view.py`) to `corner_radius=11, height=38`, sharpened slate contrast (`#1F2A3C`/`#2A3950`/`#151D2B`, `#3E5272`/`#5B78A3`/`#344663`), removed unused slate theme imports, and preserved `circular_gauge.py` (`268x268`), `theme.py`, and `right_col`.
-   - Certified `py_compile`, `--help`, offscreen Tk (`780x520` & `720x500` UnifiedApp + standalone, pixel-diff `nb!=hb!=pb`, `tw<bw`, state toggles), `rules:check` 22/22, `gitleaks` 0, and local commit on `master` (offline).
-
-### 0.0b Prior Completed Milestone: Dashboard Left-Column Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`)
-1. **Gauge Scaling, Pill Compaction & Independent QA (`AUTH-MGR-20261126-DASHBOARD-LEFT-QA-003`):**
-   - Enlarged `CircularCountdownGauge` (`gui/components/circular_gauge.py`, `232` lines) from `240x240` to `268x268` via `GaugeGeometry`, `_build_gauge_geometry()`, and `_compute_cap_ovals()` (`outer_bbox=(18,18,250,250)` `11px`/`18px` halo, `inner_bbox=(32,32,236,236)` `5px`, `36pt`/`9pt` local fonts; `FONT_BADGE` untouched at `8pt`).
-   - Compacted `DashboardView._build_action_grid` (`gui/components/dashboard_view.py`, `372` lines) to `expand=False`, `weight=0`, `padx=2`, `5/6/6` column weights (`btn_w=90/110`), `height=36`, `corner_radius=10`, `sticky="ew"`, and added `padx=0, pady=0` + height-drift guard in `PillButton` (`gui/components/pill_button.py`, `247` lines) with `0` edits to `right_col`.
-   - Certified offscreen Tk layout across `780x520`, `780x520->720x500`, and `fresh_720x500`, logged `CHG-20261126-010`, updated `memory.md` (`S.No 022`) & global `memory.md`, and committed locally on `master` [`origin/master: ahead 1`] (remote push blocked exit 128: interactive GitHub credential prompt disabled).
+### 0.0 Last Completed Milestone: Dashboard Audio Stream & Process Tree Health Cards (`TASK-DASHBOARD-HEALTH-CARDS-001`)
+1. **Modular 6-Card Health Summary & Telemetry Sync (`AUTH-MGR-20261126-DASHBOARD-HEALTH-QA-001`, `CHG-20261126-012`):**
+   - Extracted pure card specs, formatters (`format_audio_card`, `format_process_tree_card`, `format_health_tooltip`), and partial-update merger (`merge_health_telemetry`) into `gui/components/health_summary.py` (`234` L / `9,815` B, zero tkinter) and tightened `DashboardView` floating cards (`padx=10, pady=5`, outer `pady=2`, `chip padx=(0, 6)`, `328` L / `17,414` B) preserving `268x268` gauge and `38px` (`r=11`) tactile pills.
+   - Added `normalize_telemetry_defaults` in `core/telemetry_collector.py` (`146` L), extracted `core/coordinator_helpers.py` (`133` L) & `gui/app_event_handlers.py` (`126` L), and synced 5 audio/tree fields & resets across `core/coordinator.py` (`326` L / `20,805` B), `gui/app_event_bridge.py` (`290` L), and `gui/unified_app.py` (`275` L / `20,524` B).
+   - Added `tests/` (`__init__.py`, `test_dashboard_health_cards.py` `389` L, `test_dashboard_health_layout.py` `176` L); certified **15/15 PASSED** (`5.426s`), offscreen Tk (`780x520`, `780x520->720x500`, fresh `720x500`: `right_col reqh=306 <= 407/427`, `eligibility_card bottom=407/427`, 6 cards `<= 329px <= 335px`, `268x268` gauge, `38px` pills, `tw<bw`), Rule 28/BOM **11/11**, `rules:check` **22/22**, `gitleaks` **0**, and pruned `temp_prompt/`.
 
 ### 0.1 Historical Certified Milestones (Concise Archive)
-1. **README Showcase & FAQ (`TASK-README-ENHANCE-002`):** Added `UI Preview & Visual Layout`, `Troubleshooting & FAQ`, and `Contributing Guidelines` (`< 22 KB`, anchors PASS, `CHG-20261126-009`).
-2. **Public GitHub Polish (`TASK-PUBLIC-GITHUB-POLISH-001`):** Upgraded `README.md` (`18853f2`, `7c6733b`; `33` app targets), tracked `requirements`/`LICENSE`/`.gitattributes`, un-BOMmed `launchers/*.bat`, untracked `smart_shutdown_settings.json`, normalized `LF`s, `CHG-20261126-008`.
-3. **Direct GUI & History Reset (`TASK-BAT-DIRECT-GUI-001`, `TASK-GIT-HISTORY-RESET-001`):** Audited `10/10` `launchers/*.bat`, rewrote `Smart_Shutdown.bat` (`BOM=False`, `CRLF`, `--gui`/`FORWARD_ARGS`), reset local history (`631452b` -> `f590b64`), `CHG-20261126-006`/`007`.
-4. **Pre-GitHub Cleanup (`TASK-PRE-GITHUB-CLEANUP-001`):** Removed `tests/` (36), `temp_prompt/` (110), `archive/` (3), mocks, `.bak`, caches & old log; hardened `.gitignore`; `CHG-20261126-005`.
-5. **Live 15m/60s & Sim 5m/60s (`TASK-LIVE-15M-SIM-5M-60S-001`):** Set `DEFAULT_SIMULATION_SECONDS = 300`, aligned Live `15m`/`60s`, scoped `10s` to Demo, synced `.json`/`.lnk`; **346/346 PASS**, `CHG-20261126-004`.
-6. **3-State & Sim Parity (`TASK-STATUS-3STATE-AND-RUNNING-SYNC-001`, `TASK-SIMULATION-1MIN-DEFAULT-001`, `TASK-STATUS-IDLE-DEFAULT-FIX-001`):** Split `RUNNING` vs `Idle`/`Active`/`Away`, `resolve_mode_duration_seconds()`, `has_user_input`; **346/346 PASS**, `CHG-20261126-001`..`003`.
-7. **Status Unification & Persistence (`TASK-STATUS-DISPLAY-SYNC-FIX-001`, `TASK-MINI-HUD-SHUTDOWN-PERSISTENCE-001`):** Unified 5 GUI surfaces (`338/338`), `core/settings_store.py` (`fsync`+`.bak`), `mini_hud_on_startup=True`, `reconcile_startup_shortcut` (`337/337`), `CHG-20261125-004`/`005`.
-8. **Rename & Audit (`TASK-POST-RENAME-VERIFICATION-001`..`TASK-STARTUP-HUD-001`):** Smart Shutdown rename & `.lnk` (`311/311`), decoupled 6 modules + lazy barrels (`302/302`), `withdraw()` (`273/273`), dual timers (`257/257`), Live default (`226/226`), `CHG-20261125-001`..`003`.
+1. **Tactile 38px Action Pills (`TASK-DASHBOARD-PILL-TACTILE-38-001`, `9446380`):** Upgraded `PillButton` (`281` L / `12,439` B) with `_PillStyle`, `_apply_crescent_rim()`, `_render_pill_surface()`, and `_build_action_grid` (`corner_radius=11, height=38`, `#1F2A3C`/`#3E5272` slate); offscreen Tk & pixel-diff PASS, `rules:check` 22/22, `gitleaks` 0, `CHG-20261126-011`.
+2. **Dashboard Left Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`, `06c4075`):** Enlarged `CircularCountdownGauge` (`268x268`, `36pt`/`9pt`) and compacted `2x3` pills (`5/6/6` cols, `padx=0, pady=0`, height-drift guard, `0` edits to `right_col`); offscreen Tk PASS, `CHG-20261126-010`.
+3. **README Showcase & FAQ (`TASK-README-ENHANCE-002`):** Added `UI Preview & Visual Layout`, `Troubleshooting & FAQ`, and `Contributing Guidelines` (`< 22 KB`, anchors PASS, `CHG-20261126-009`).
+4. **Public GitHub Polish (`TASK-PUBLIC-GITHUB-POLISH-001`):** Upgraded `README.md` (`18853f2`, `7c6733b`; `33` app targets), tracked `requirements`/`LICENSE`/`.gitattributes`, un-BOMmed `launchers/*.bat`, untracked `smart_shutdown_settings.json`, normalized `LF`s, `CHG-20261126-008`.
+5. **Direct GUI & History Reset (`TASK-BAT-DIRECT-GUI-001`, `TASK-GIT-HISTORY-RESET-001`):** Audited `10/10` `launchers/*.bat`, rewrote `Smart_Shutdown.bat` (`BOM=False`, `CRLF`, `--gui`/`FORWARD_ARGS`), reset local history (`631452b` -> `f590b64`), `CHG-20261126-006`/`007`.
+6. **Pre-GitHub Cleanup (`TASK-PRE-GITHUB-CLEANUP-001`):** Removed `tests/` (36), `temp_prompt/` (110), `archive/` (3), mocks, `.bak`, caches & old log; hardened `.gitignore`; `CHG-20261126-005`.
+7. **Live 15m/60s & Sim 5m/60s (`TASK-LIVE-15M-SIM-5M-60S-001`):** Set `DEFAULT_SIMULATION_SECONDS = 300`, aligned Live `15m`/`60s`, scoped `10s` to Demo, synced `.json`/`.lnk`; **346/346 PASS**, `CHG-20261126-004`.
+8. **3-State & Sim Parity (`TASK-STATUS-3STATE-AND-RUNNING-SYNC-001`, `TASK-SIMULATION-1MIN-DEFAULT-001`, `TASK-STATUS-IDLE-DEFAULT-FIX-001`):** Split `RUNNING` vs `Idle`/`Active`/`Away`, `resolve_mode_duration_seconds()`, `has_user_input`; **346/346 PASS**, `CHG-20261126-001`..`003`.
+9. **Status Unification & Persistence (`TASK-STATUS-DISPLAY-SYNC-FIX-001`, `TASK-MINI-HUD-SHUTDOWN-PERSISTENCE-001`):** Unified 5 GUI surfaces (`338/338`), `core/settings_store.py` (`fsync`+`.bak`), `mini_hud_on_startup=True`, `reconcile_startup_shortcut` (`337/337`), `CHG-20261125-004`/`005`.
+10. **Rename & Audit (`TASK-POST-RENAME-VERIFICATION-001`..`TASK-STARTUP-HUD-001`):** Smart Shutdown rename & `.lnk` (`311/311`), decoupled 6 modules + lazy barrels (`302/302`), `withdraw()` (`273/273`), dual timers (`257/257`), Live default (`226/226`), `CHG-20261125-001`..`003`.
 
 ---
 
@@ -58,7 +55,7 @@
 ```
 Smart Shutdown/ (Product: Smart Shutdown)
 ├── .agents/rules/                      # Mirrored canonical rules (8 core + 14 departments_archive/)
-├── core/                               # Modular backend engine & legacy countdown dialog (25 files)
+├── core/                               # Modular backend engine & legacy countdown dialog (26 files)
 │   ├── __init__.py                     # Package exports & public API
 │   ├── analyzer.py                     # External Antigravity session analyzer & idle evaluator
 │   ├── app_closer.py                   # Safe multi-tier application closer
@@ -67,6 +64,7 @@ Smart Shutdown/ (Product: Smart Shutdown)
 │   ├── config.py                       # Global paths, logger ("SmartShutdown"), settings persistence
 │   ├── console.py                      # Windows console window hiding utility
 │   ├── coordinator.py                  # Master state machine & background monitoring loop
+│   ├── coordinator_helpers.py          # Extracted coordinator state/telemetry/blocker helpers
 │   ├── gui.py                          # Legacy Tkinter countdown window (347 lines, < 24 KB)
 │   ├── gui_widgets.py                  # Extracted legacy GUI widget builders (131 lines)
 │   ├── input_hook.py                   # Real-time physical keyboard/mouse activity tracker
@@ -80,19 +78,24 @@ Smart Shutdown/ (Product: Smart Shutdown)
 │   ├── shutdown_dispatcher.py          # Multi-action power dispatcher (shutdown/sleep/hibernate/lock)
 │   ├── startup.py                      # Windows Startup shortcut manager (Smart_Shutdown.lnk)
 │   ├── system_tray.py                  # Detached pystray system tray controller
-│   ├── telemetry_collector.py          # Live CPU/Net/Disk/Process telemetry collector
+│   ├── telemetry_collector.py          # Live CPU/Net/Disk/Audio/Process telemetry collector & defaults
 │   ├── transcript_sentinel.py          # External Antigravity transcript watcher
 │   ├── waiting_gate.py                 # User prompt / subagent waiting gate evaluator
 │   └── win32_window.py                 # Win32 window enumeration & graceful close helpers
-├── gui/                                # Unified Fluent Dark Tkinter Desktop App & Mini HUD (27 files)
+├── gui/                                # Unified Fluent Dark Tkinter Desktop App & Mini HUD (29 files)
 │   ├── __init__.py                     # PEP 562 lazy barrel exports
 │   ├── app_event_bridge.py             # Extracted coordinator-to-GUI event bridge
+│   ├── app_event_handlers.py           # Extracted coordinator event handlers & state sync
 │   ├── countdown_overlay.py            # Pre-shutdown countdown overlay
 │   ├── settings_window.py              # Standalone settings window wrapper
 │   ├── theme.py                        # Fluent Dark color & font tokens
 │   ├── unified_app.py                  # Master window orchestrator (UnifiedSentinelApp)
-│   ├── components/                     # 19 UI components & resolvers
+│   ├── components/                     # 20 UI components & resolvers (incl. health_summary.py)
 │   └── dialogs/                        # __init__.py, close_confirm_dialog.py
+├── tests/                              # Unit & offscreen Tk layout verification suite (3 files)
+│   ├── __init__.py                     # Package marker
+│   ├── test_dashboard_health_cards.py  # Batteries 1-4: 6 health cards, bridge sync, Rule 28/BOM
+│   └── test_dashboard_health_layout.py # Battery 5: offscreen Tk 780x520 & 720x500 geometry bounds
 ├── launchers/                          # 00..09 Windows batch presets (10 files, BOM=False, CRLF)
 ├── scripts/                            # 00..07 CLI scripts, preview_*.py, check-rules-health.js (11 files)
 ├── changes_log/                        # 5-Tier forensic audit tracking (daily/entries/master/recent_10/summary)
@@ -141,6 +144,7 @@ Smart Shutdown/ (Product: Smart Shutdown)
 | 021 | README Showcase & FAQ (`TASK-README-ENHANCE-002`) | Lacked ASCII UI layout preview, Troubleshooting FAQ, and Contributing guide | Verify code facts; add `UI Preview`, `Troubleshooting & FAQ`, `Contributing`; validate GitHub slugs & `< 22 KB`; log `CHG-20261126-009` | Self-service onboarding, exact anchors & clean docs | Docs | Anchors PASS, `< 22 KB`, `rules:check` 22/22, `gitleaks` 0 |
 | 022 | Dashboard Left Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`) | `240px` gauge left vertical slack; `expand=True` & `tk.Button` pad ratcheted pills `36->42px`; uniform cols clipped `Shutdown Now` at `720x500` | `GaugeGeometry(268)`, `5/6/6` cols (`90/110`), `height=36`, `padx=0, pady=0`, `_on_configure` height-drift guard | Balanced `268x268` gauge + exact `36px` pills (`tw<bw`) at `780x520` & `720x500`; `right_col` untouched | Phases 1-2 & QA | Offscreen Tk PASS, Rule 28 PASS, `rules:check` 22/22, `gitleaks` 0 |
 | 023 | Tactile 38px Pill Buttons (`TASK-DASHBOARD-PILL-TACTILE-38-001`) | Flat `36px` (`r=10`) pills lacked 3D depth & slate contrast | `_PillStyle`, `_apply_crescent_rim()`, `_render_pill_surface()`, `corner_radius=11, height=38`, sharpened `#1F2A3C`/`#3E5272` slate | Distinct 3D normal/hover/pressed surfaces at `38px` (`tw<bw`); `268x268` gauge & `right_col` untouched | Impl & QA | Offscreen Tk & pixel-diff PASS, Rule 28 PASS, `rules:check` 22/22, `gitleaks` 0 |
+| 024 | Dashboard Audio & Process Tree Cards (`TASK-DASHBOARD-HEALTH-CARDS-001`) | `DashboardView` showed 4/6 cards; `audio_inhibit_enabled` & `is_tree_busy` resets drifted across bridge/coordinator; `720x500` width/height pressure | Extract `gui/components/health_summary.py`, `core/coordinator_helpers.py`, `gui/app_event_handlers.py`; add `Audio Stream` & `Process Tree` cards (`padx=10, pady=5`), `normalize_telemetry_defaults`, and `tests/` | 6 live health cards within `780x520` & `720x500` (`max_reqw=329<=335`, `reqh=306<=407`), decoupled AI vs Process Tree, synced resets | Phases 1-3 | `unittest` 15/15 PASS (`5.426s`), Offscreen Tk PASS, Rule 28 11/11 PASS, `rules:check` 22/22, `gitleaks` 0 |
 
 ---
 

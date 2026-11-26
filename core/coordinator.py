@@ -9,19 +9,20 @@ from core.config import SettingsConfig, release_single_instance_lock
 from core.models import LifecycleState, TargetMode, AntiGravityAIState, TelemetryEvent, UserCommand, DEFAULT_SIMULATION_SECONDS, resolve_mode_duration_seconds
 import core.input_hook as input_hook, core.process_tree as process_tree
 import core.waiting_gate as waiting_gate, core.app_closer as app_closer, core.shutdown_dispatcher as shutdown_dispatcher
+from core.coordinator_helpers import (
+    resolve_target_mode as _resolve_target_mode,
+    read_idle_seconds,
+    build_state_payload,
+    build_telemetry_payload,
+    evaluate_waiting_gates,
+    evaluate_system_blockers,
+    flush_before_power_action,
+)
 from core.telemetry_collector import TelemetryCollector, evaluate_hardware_block
 from core.transcript_sentinel import TranscriptSentinel
 
 logger_instance = logging.getLogger("SmartShutdown")
 _EXEC_MODE_MAP = {"Demo (30s)": TargetMode.DEMO_30S, "Demo (10s)": TargetMode.DEMO_10S, "Simulation": TargetMode.SIMULATION, "Live": TargetMode.LIVE}
-
-
-def _resolve_target_mode(mode: Union[TargetMode, str]) -> TargetMode:
-    if isinstance(mode, TargetMode): return mode
-    m = str(mode).upper()
-    for token, target in (("30", TargetMode.DEMO_30S), ("10", TargetMode.DEMO_10S), ("DEMO", TargetMode.DEMO_30S)):
-        if token in m: return target
-    return TargetMode.SIMULATION if ("SIM" in m or "DRY" in m) else TargetMode.LIVE
 
 
 class SentinelCoordinator:
@@ -93,30 +94,13 @@ class SentinelCoordinator:
     def _emit_ai(self, **kwargs: Any) -> None: self.emit_event("AI_STATE_CHANGE", {"ai_state": self.ai_state, "workers": self._last_subagent_count, **kwargs})
 
     def _read_idle_seconds(self) -> float:
-        try: return float(getattr(input_hook, "get_user_idle_seconds", input_hook.get_idle_seconds)())
-        except Exception: return 0.0
+        return read_idle_seconds(input_hook)
 
     def _state_payload(self, **kwargs: Any) -> Dict[str, Any]:
-        eff_thresh, idle_sec = int(self.effective_user_inactivity_threshold()), self._read_idle_seconds()
-        p = {
-            "state": self.state.value if isinstance(self.state, LifecycleState) else str(self.state),
-            "target_mode": self.target_mode.value, "mode": self.target_mode.value,
-            "is_demo": self.target_mode in (TargetMode.DEMO_30S, TargetMode.DEMO_10S), "is_paused": self.is_paused,
-            "active_count": self._last_active_count, "subagent_count": self._last_subagent_count, "workers": self._last_subagent_count,
-            "dry_run": self.dry_run, "idle_sec": round(idle_sec, 1),
-            "has_user_input": bool(self.baseline_input_tick and input_hook.get_last_input_tick() > self.baseline_input_tick),
-            "idle_threshold": eff_thresh, "inactivity_threshold_sec": eff_thresh,
-            "idle_remaining_sec": max(0, eff_thresh - int(idle_sec)),
-            "idle_pct": round(max(0.0, min(1.0, idle_sec / max(1, eff_thresh))), 3),
-            "remaining": self.remaining_countdown_seconds, "remaining_seconds": self.remaining_countdown_seconds,
-            "total_seconds": self._default_mode_seconds(), "target_action": getattr(self.config, "target_action", "Shutdown"),
-        }
-        p.update(kwargs); return p
+        return build_state_payload(self, input_hook, kwargs)
 
     def _build_telemetry_payload(self, hw: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        hw_data = dict(hw if hw is not None else self._last_hw_telemetry)
-        hw_data.setdefault("is_tree_busy", False)
-        return self._state_payload(**hw_data, is_paused=self.is_paused, waiting_mode=self.config.waiting_mode, bypass_inhibitors=self.bypass_inhibitors, ai_state=self.ai_state)
+        return build_telemetry_payload(self, hw=hw)
 
     def _get_waiting_mode_enum(self) -> waiting_gate.WaitingMode:
         m = (self.config.waiting_mode or "").strip().lower()
@@ -137,31 +121,10 @@ class SentinelCoordinator:
         return False
 
     def _evaluate_waiting_gates(self, eval_res: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        mode, hybrid_timeout = self._get_waiting_mode_enum(), float(self.config.waiting_hybrid_timeout_min * 60)
-        for session in eval_res.get("sessions", []):
-            if session.get("status") != "WAITING_USER": continue
-            gate_res = waiting_gate.evaluate_waiting_state(session_state=session, mode=mode, timeout_seconds=hybrid_timeout)
-            if gate_res.should_block_shutdown:
-                self.state, self.ai_state = LifecycleState.WAITING_USER_PROMPT, AntiGravityAIState.INPUT_PENDING.value
-                self.logger.info(f"[COORDINATOR] Waiting user prompt: {gate_res.details}")
-                self._emit_state(reason="waiting_user_input", details=gate_res.details); self._emit_ai(details=gate_res.details)
-                return {"status": "WAITING_USER_BLOCKED", "gate_res": gate_res, "eval_res": eval_res}
-        return None
+        return evaluate_waiting_gates(self, eval_res, waiting_gate)
 
     def _evaluate_system_blockers(self, eval_res: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        if self.bypass_inhibitors: return None
-        if process_tree.is_process_tree_busy():
-            self.state = LifecycleState.AI_EVALUATION; self._emit_state(reason="process_tree_busy")
-            return {"status": "AI_BUSY_PROCESS", "eval_res": eval_res}
-        if eval_res.get("active_count", 0) > 0:
-            self.state, self.ai_state = LifecycleState.AI_EVALUATION, AntiGravityAIState.WORKING.value
-            self._emit_ai(reason="transcripts_active", active_count=self._last_active_count, subagent_count=self._last_subagent_count)
-            return {"status": "AI_BUSY_TRANSCRIPT", "eval_res": eval_res}
-        hw_reason = evaluate_hardware_block(self._last_hw_telemetry, self.config)
-        if hw_reason:
-            self.state = LifecycleState.AI_EVALUATION; self.logger.info(f"[COORDINATOR] Inhibited by {hw_reason}.")
-            self._emit_state(reason=hw_reason); return {"status": "HW_BUSY_INHIBITED", "reason": hw_reason, "eval_res": eval_res}
-        return None
+        return evaluate_system_blockers(self, eval_res, process_tree, evaluate_hardware_block)
 
     def _update_ai_snapshot(self, eval_res: Dict[str, Any], emit: bool = True) -> None:
         self._last_active_count, self._last_subagent_count, self._last_summary = eval_res.get("active_count", 0), eval_res.get("subagent_count", 0), eval_res.get("summary", "")
@@ -216,17 +179,7 @@ class SentinelCoordinator:
 
     def _flush_before_power_action(self) -> None:
         """Flush log handlers and release single-instance lock prior to OS power action."""
-        if self.dry_run:
-            return
-        for handler in list(getattr(self.logger, "handlers", [])):
-            try:
-                handler.flush()
-            except Exception:
-                pass
-        try:
-            release_single_instance_lock(logger=self.logger)
-        except Exception:
-            pass
+        flush_before_power_action(self, release_single_instance_lock)
 
     def _handle_countdown_zero(self) -> None:
         self.state = LifecycleState.SHUTDOWN_EXECUTED

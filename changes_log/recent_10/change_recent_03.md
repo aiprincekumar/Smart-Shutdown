@@ -1,25 +1,23 @@
-﻿# Detailed Change Entry: CHG-20261126-009
+﻿# Detailed Change Entry: CHG-20261126-010
 
-> **Change ID:** `CHG-20261126-009`  
-> **Timestamp:** `2026-11-26 03:43:00`  
+> **Change ID:** `CHG-20261126-010`  
+> **Timestamp:** `2026-11-26 06:58:36`  
 > **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)  
-> **Target Scope:** `readme-ui-preview-troubleshooting-contributing-sync`  
-> **Initiative:** `TASK-README-ENHANCE-002`  
-> **Authorization Token:** `AUTH-MGR-20261126-README-ENHANCE-001`  
-> **Governing Standards:** Universal Rule 1 (Supreme CEO), Rule 5 & 8 (UTF-8 BOM), Rule 6 (5-Tier Changes Log), Rule 12 (DevOps & Release), Rule 15 (Git Gatekeeper), Rule 16 (Developer Profile), Rule 20 (Diagnostic Matrix), Rule 21 & 23 (Project Memory Dossier), Rule 27 (Rules Health Sentinel)
+> **Target Scope:** `gui/components/circular_gauge.py`, `gui/components/dashboard_view.py`, `gui/components/pill_button.py`  
+> **Initiative:** `TASK-DASHBOARD-LEFT-LAYOUT-001`  
+> **Authorization Token:** `AUTH-MGR-20261126-DASHBOARD-LEFT-QA-003`  
+> **Governing Standards:** Universal Rule 1 (Supreme CEO), Rule 5 & 8 (UTF-8 BOM), Rule 6 (5-Tier Changes Log), Rule 12 (DevOps & Release), Rule 15 (Git Gatekeeper), Rule 16 (Developer Profile), Rule 20 (Diagnostic Matrix), Rule 21 & 23 (Project Memory Dossier), Rule 27 (Rules Health Sentinel), Rule 28 (Modularity)
 
 ---
 
 ## 📋 1. Purpose & Architectural Rationale
 
-Enhance `README.md` for self-service contributor onboarding and visual clarity while syncing 5-tier governance ledgers and preserving live daemon `PID 10280`, `smart_shutdown.lock`, `logs/smart_shutdown.log`, and untracked local `smart_shutdown_settings.json` (`1,412` B on disk, offline `master`, zero remote push):
-1. **Verified Codebase Facts & Enhanced `README.md` (`BOM=False`, `LF`, `< 500` lines, `< 22 KB`):**
-   - Verified exact symbols and defaults across `scripts/06_cancel_or_exit_monitor.py`, `core/startup.py`, `core/settings_store.py`, `gui/components/mini_overlay.py`, `gui/components/title_bar.py`, and `gui/components/dashboard_view.py`.
-   - Added plain-ASCII Table of Contents entries and headings for `UI Preview & Visual Layout` (`#ui-preview--visual-layout`), `Troubleshooting & FAQ` (`#troubleshooting--faq`), and `Contributing Guidelines` (`#contributing-guidelines`), preserving `#prerequisites` and `#gui-tabs--controls-guide` badge anchors and excluding deleted `tests/`/`pytest`/`unittest` or broken `assets/*.png` links.
-   - Validated GitHub-slugger headings, all anchor/relative file links, zero non-badge images, `BOM=False`, `CRLF=0`, `< 500` lines, and `< 22 KB`.
-2. **Governance Synchronization (`memory.md` & 5-Tier `changes_log/`):**
-   - Updated workspace `memory.md` (Section `0` `TASK-README-ENHANCE-002`, folded `TASK-PUBLIC-GITHUB-POLISH-001` concisely into `0.1`, added `S.No 021`, `< 16 KB`, `BOM=True`, `LF`).
-   - Recorded `CHG-20261126-009` across `entries/`, `daily/`, `summary/`, `master/` (`<= 900` B delta, `< 24 KB`), and rotated `recent_10/` (`09->10`..`01->02`, new `01`), all `BOM=True`, `LF`.
+Enlarge the Dashboard left-column countdown gauge proportionally (`240x240` -> `268x268`) while compacting the 2x3 action pill grid cleanly (`36px` fixed height, zero vertical Studio stretching, zero text clipping at `780x520` and `720x500` minsize) without altering `right_col`, `gui/theme.py`, `gui/unified_app.py`, `gui/countdown_overlay.py`, `core/`, `README.md`, while `PID 10280` ran undisturbed through implementation/QA until workspace server restart at `07:40:54`:
+1. **Proportional Dual-Ring Gauge (`gui/components/circular_gauge.py`):**
+   - Added `GaugeGeometry`, `_build_gauge_geometry(size=268)`, and `_compute_cap_ovals()` scaling `outer_bbox=(18,18,250,250)` (`11px` stroke, `18px` halo), `inner_bbox=(32,32,236,236)` (`5px` stroke), `center=(134.0, 134.0)`, `clock_font=('Segoe UI Variable Display', 36, 'bold')`, and `sub_font=('Segoe UI Variable Text', 9, 'bold')` without mutating `gui.theme.FONT_BADGE` (`8pt`).
+2. **Action Pill Grid & Zero-Ratchet Guard (`gui/components/dashboard_view.py`, `gui/components/pill_button.py`):**
+   - Set `grid_frame` `padx=2`, weighted columns `5/6/6` (`btn_w = 90 if c == 0 else 110`), `grid_rowconfigure(..., weight=0)`, `height=36`, `corner_radius=10`, `sticky="ew"`, and `grid_frame.pack(fill="x", expand=False, pady=(4, 0))`.
+   - Added `padx=0, pady=0` on `tk.Button.__init__` and height-drift guard (`target_h = h if abs(h - self._curr_h) > 2 else self._curr_h`) in `PillButton._on_configure`, locking all 6 buttons at exact `36px` height and preventing width clipping (`btn_shutdown` `tw=105 < 115`, `▶ Resume` `tw=57 < 93`) at `720x500`.
 
 ---
 
@@ -27,13 +25,13 @@ Enhance `README.md` for self-service contributor onboarding and visual clarity w
 
 | S.No | File / Scope | Root Cause | Proposed Fix | Post-Fix Impact | Phase # | Test Gate |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | `README.md` | Public README lacked visual UI layout previews, actionable troubleshooting FAQ, and contributing guidelines | Verify code facts; add `UI Preview & Visual Layout` (`780x520` cockpit + `220x65` Mini HUD ASCII boxes, `04`/`08`/`09` previews, zero broken images), `Troubleshooting & FAQ`, and `Contributing Guidelines` under `< 22 KB` | Complete, zero-drift onboarding & self-service troubleshooting docs | Docs | `BOM=False`, `LF`, `< 500` lines, `< 22 KB`, GitHub-slugger anchors PASS |
-| 2 | `memory.md`, `changes_log/` (`CHG-20261126-009`), global `memory.md` | Governance ledgers required `TASK-README-ENHANCE-002`, `S.No 021`, `CHG-20261126-009`, and local commit sync | Update workspace `memory.md` (`< 16 KB`), 5-tier `changes_log/` (`master < 24 KB`, `recent_10` rotated), commit locally, sync global `memory.md` (`<= 665` lines, net `<= 0` B) | 100% Rule 6/21/23/27 & UTF-8 BOM compliance | Gov | `rules:check` 22/22, `gitleaks` 0 leaks, clean `git status` |
+| 1 | `gui/components/circular_gauge.py` | Fixed `240x240` ring geometry left vertical excess in left column and hard-coded cap coordinates | Introduce `GaugeGeometry`, `_build_gauge_geometry(268)`, and `_compute_cap_ovals()` (`268x268`, `36pt`/`9pt` local fonts) | Balanced `268x268` hero gauge with proportional rings/caps and `131x108` center readout inside `199px` inner ring | Phases 1-2 | `py_compile`, offscreen Tk geometry PASS, Rule 28 (`232` lines, `BOM=True`, `LF`) |
+| 2 | `gui/components/dashboard_view.py`, `gui/components/pill_button.py` | `grid_frame` `expand=True` stretched `42px` pills vertically; `tk.Button` default padding & `_on_configure` ratcheted `36->40->42px`; uniform columns clipped `105px` `Shutdown Now` at `720x500` | Set `expand=False`, `weight=0`, `5/6/6` columns (`90/110` widths), `padx=2`, `height=36`; set `padx=0, pady=0` and `_on_configure` height-drift guard in `PillButton` | Exact `36px` rendered height across `780x520` & `720x500` with `>= 10px` horizontal text margin | Rem 1-2 & QA | Offscreen Tk (`780x520`, `780x520->720x500`, `fresh_720x500`) PASS, `rules:check` 22/22, `gitleaks` 0 |
 
 ---
 
 ## 🧪 3. Verification & Test Gate Proof
 
-- **README Validation (`python -B`):** Verified `BOM=False`, `CRLF=0`, `< 500` lines, `< 22 KB`, exact GitHub-slugger anchors, valid relative file links, zero broken `assets/*.png` links, and zero deleted-path refs.
-- **Rules Health, CLI Smoke & Security:** `python -B -m py_compile smart_shutdown.py`, `python -B smart_shutdown.py --help`, `npm run rules:check` (`22/22` Exit `0`), `gitleaks detect --redact --no-banner` (`0` leaks), and `gitleaks detect --source . --no-git --redact --no-banner` (`0` leaks).
-- **Local Commit & Runtime Safety:** Committed locally on offline `master` (`git remote -v` empty, zero push); `smart_shutdown_settings.json` (`1,412` B, untracked), `smart_shutdown.lock`, `logs/smart_shutdown.log`, and live daemon `PID 10280` preserved untouched.
+- **Syntax, CLI & Diff Isolation (`python -B`):** Verified ONLY `circular_gauge.py`, `dashboard_view.py`, and `pill_button.py` modified (`0` edits to `right_col`/`theme.py`/`core/`); `py_compile` & `smart_shutdown.py --help` Exit `0`.
+- **Offscreen Tkinter Geometry (`alpha=0.0`, `+-20000+-20000`):** Verified `780x520`, `780x520->720x500`, and `fresh_720x500` — `canvas=268x268`, `center=[134.0, 134.0]`, all 6 pills `36px` (`h=36, reqh=36, _curr_h=36`), all labels (`45..105px`, `'▶ Resume'` `57px`) `< winfo_width()`, zero overlap in `left_col`/`right_col`, and full state transitions (`update_countdown`, pause, bypass, compact/studio).
+- **Rule 28, Rules Health, Security & Runtime Guard:** `232`/`372`/`247` lines (`BOM=True`, `LF`), `npm run rules:check` **22/22 PASS**, `gitleaks` (git + `--no-git`) **0** leaks, zero `__pycache__/`, `PID 10280` undisturbed through implementation/QA until server restart at `07:40:54`, `installer/RELEASE_v1.0.0.md` untracked, committed locally on `master` [`origin/master: ahead 1`] (push blocked `exit 128`: interactive GitHub credential prompt disabled).

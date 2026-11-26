@@ -45,19 +45,32 @@ class GuiLogQueueHandler(logging.Handler):
         finally: self._local.emitting = False
 
 
+_DIRECT_HISTORY_REASONS = {
+    "user_cancelled": ("sessions", "Countdown Aborted by User", "user_cancelled"),
+    "physical_interrupt": ("sessions", "Physical Input Interrupt", "physical_interrupt"),
+}
+
+
+def _classify_shutdown_history(r_raw: str, data: Dict[str, Any]) -> Tuple[str, str, str]:
+    is_dry = bool(data.get("is_demo") or data.get("dry_run"))
+    default_msg = "Dry-run complete" if is_dry else "Shutdown executed"
+    details = r_raw or str(data.get("target_action") or default_msg)
+    if is_dry:
+        return ("dry_run", "Simulation / Demo Shutdown Triggered", details)
+    return ("power", "Power Action Dispatched", details)
+
+
 def classify_history_event(state_name: str, reason: Optional[str], data: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
     """Classify meaningful lifecycle transitions into HistoryView categories without polling spam."""
     st, r_raw = str(state_name or "").strip().upper(), str(reason or "").strip()
     r_low = r_raw.lower()
     if "SHUTDOWN" in st:
-        if bool(data.get("is_demo")) or bool(data.get("dry_run")):
-            return ("dry_run", "Simulation / Demo Shutdown Triggered", r_raw or str(data.get("target_action") or "Dry-run complete"))
-        return ("power", "Power Action Dispatched", r_raw or str(data.get("target_action") or "Shutdown executed"))
-    if bool(data.get("is_paused")) or "PAUS" in st: return ("snoozes", "Countdown Paused", r_raw or "User paused countdown")
-    if r_low in _BLOCKER_TITLES: return ("blocker", _BLOCKER_TITLES[r_low], str(data.get("details") or r_raw))
-    if r_low == "user_cancelled": return ("sessions", "Countdown Aborted by User", "user_cancelled")
-    if r_low == "physical_interrupt": return ("sessions", "Physical Input Interrupt", "physical_interrupt")
-    return None
+        return _classify_shutdown_history(r_raw, data)
+    if bool(data.get("is_paused")) or "PAUS" in st:
+        return ("snoozes", "Countdown Paused", r_raw or "User paused countdown")
+    if r_low in _BLOCKER_TITLES:
+        return ("blocker", _BLOCKER_TITLES[r_low], str(data.get("details") or r_raw))
+    return _DIRECT_HISTORY_REASONS.get(r_low)
 
 
 def resolve_startup_mode(config: SettingsConfig, dry_run: bool) -> TargetMode:
@@ -89,6 +102,7 @@ def _read_has_user_input(coordinator: Any) -> bool:
 
 def build_merged_context(coordinator: Any, snapshot: Dict[str, Any], extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     ctx: Dict[str, Any] = {k: getattr(coordinator, k, d) for k, d in (("is_paused", False), ("bypass_inhibitors", False), ("target_mode", TargetMode.LIVE), ("ai_state", "READY"))}
+    ctx["audio_inhibit_enabled"] = bool(getattr(getattr(coordinator, "config", None), "audio_inhibit_enabled", True))
     ctx.update(snapshot)
     if extra: ctx.update(extra)
     if ctx.get("idle_sec") is None and "user_inactivity_sec" in ctx: ctx["idle_sec"] = ctx["user_inactivity_sec"]
@@ -97,15 +111,33 @@ def build_merged_context(coordinator: Any, snapshot: Dict[str, Any], extra: Opti
     return ctx
 
 
+def _is_hardware_idle(snapshot: Dict[str, Any]) -> bool:
+    cpu = float(snapshot.get("cpu_percent", 0.0))
+    cpu_t = float(snapshot.get("cpu_threshold", 15.0))
+    net = float(snapshot.get("net_total_kb", 0.0))
+    net_t = float(snapshot.get("net_threshold", 50.0))
+    return cpu < cpu_t and not (net >= net_t and (net > 0.0 or net_t > 0.0))
+
+
+def _audio_blocker_cleared(data: Dict[str, Any]) -> bool:
+    audio_off = "audio_active" in data and not data["audio_active"]
+    inhibit_off = "audio_inhibit_enabled" in data and not data["audio_inhibit_enabled"]
+    return audio_off or inhibit_off
+
+
 def clear_stale_blocker_reasons(snapshot: Dict[str, Any], data: Dict[str, Any]) -> None:
     """Clear stale inhibitor reason tokens when incoming telemetry shows blockers subsided."""
     reason = snapshot.get("reason")
-    if reason == "process_tree_busy" and "is_tree_busy" in data and not data["is_tree_busy"]: snapshot["reason"] = None
-    elif reason == "audio_active" and (("audio_active" in data and not data["audio_active"]) or ("audio_inhibit_enabled" in data and not data["audio_inhibit_enabled"])): snapshot["reason"] = None
-    elif reason in ("hardware_busy", "cpu_busy", "network_busy") and ("cpu_percent" in data or "net_total_kb" in data):
-        cpu, cpu_t = float(snapshot.get("cpu_percent", 0.0)), float(snapshot.get("cpu_threshold", 15.0))
-        net, net_t = float(snapshot.get("net_total_kb", 0.0)), float(snapshot.get("net_threshold", 50.0))
-        if cpu < cpu_t and not (net >= net_t and (net > 0.0 or net_t > 0.0)): snapshot["reason"] = None
+    if reason == "process_tree_busy":
+        if "is_tree_busy" in data and not data["is_tree_busy"]:
+            snapshot["reason"] = None
+        return
+    if reason == "audio_active":
+        if _audio_blocker_cleared(data):
+            snapshot["reason"] = None
+        return
+    if reason in ("hardware_busy", "cpu_busy", "network_busy") and ("cpu_percent" in data or "net_total_kb" in data) and _is_hardware_idle(snapshot):
+        snapshot["reason"] = None
 
 
 def sync_windows_startup(cfg: SettingsConfig, logger: Any) -> None:
@@ -151,8 +183,13 @@ def apply_mode_change(app: Any, new_mode: TargetMode) -> None:
     app.chip_dryrun.config(text=f" {txt} ", bg=bg); app.title_bar.set_mode(new_mode)
     rem = app.coordinator.remaining_countdown_seconds; app.total_countdown_seconds = max(1, rem)
     st, eff_t, idle_s = app._coord_state_name(), int(app.coordinator.effective_user_inactivity_threshold()), _read_safe_idle_seconds(app.coordinator)
-    mode_ctx = {"target_mode": new_mode.value, "state": st, "is_paused": False, "remaining": rem, "reason": None, "idle_sec": idle_s, "idle_threshold": eff_t, "inactivity_threshold_sec": eff_t, "has_user_input": False}
-    app._last_telemetry_snapshot.update(mode_ctx); app._last_telemetry_snapshot.pop("is_tree_busy", None); app._last_telemetry_snapshot.pop("user_inactivity_sec", None)
+    audio_enabled = bool(getattr(app.config, "audio_inhibit_enabled", True))
+    mode_ctx = {
+        "target_mode": new_mode.value, "state": st, "is_paused": False, "remaining": rem, "reason": None,
+        "idle_sec": idle_s, "idle_threshold": eff_t, "inactivity_threshold_sec": eff_t, "has_user_input": False,
+        "is_tree_busy": False, "worker_count": 0, "memory_mb": 0, "audio_inhibit_enabled": audio_enabled,
+    }
+    app._last_telemetry_snapshot.update(mode_ctx); app._last_telemetry_snapshot.pop("user_inactivity_sec", None)
     app.dashboard_view.update_health({**mode_ctx, "is_demo": new_mode in (TargetMode.DEMO_30S, TargetMode.DEMO_10S)})
     app.telemetry_view.update_telemetry(mode_ctx)
     app.update_countdown_display(rem, app.total_countdown_seconds, is_paused=False, idle_sec=idle_s, idle_threshold=eff_t); app._update_state_display(st, hud_state="DISARMED", context=mode_ctx)
@@ -165,12 +202,20 @@ def apply_save_settings(app: Any, new_cfg: SettingsConfig) -> None:
     new_cfg.clamp(); app.config = new_cfg
     if not is_running_under_test(): save_settings_config(new_cfg)
     app.coordinator.update_config(new_cfg)
-    if getattr(new_cfg, "execution_mode", "Live") != old_mode: apply_mode_change(app, settings_str_to_mode(new_cfg.execution_mode))
+    audio_enabled = bool(getattr(new_cfg, "audio_inhibit_enabled", True))
+    if not audio_enabled:
+        app._last_telemetry_snapshot["audio_active"] = False
+        clear_stale_blocker_reasons(app._last_telemetry_snapshot, {"audio_inhibit_enabled": False})
+    if getattr(new_cfg, "execution_mode", "Live") != old_mode:
+        apply_mode_change(app, settings_str_to_mode(new_cfg.execution_mode))
     else:
         app.total_countdown_seconds = resolve_initial_total_seconds(app.coordinator.target_mode, new_cfg)
         rem, eff_t = getattr(app.coordinator, "remaining_countdown_seconds", app.total_countdown_seconds), int(app.coordinator.effective_user_inactivity_threshold())
-        app._last_telemetry_snapshot.update({"inactivity_threshold_sec": eff_t, "idle_threshold": eff_t, "cpu_threshold": new_cfg.cpu_threshold_pct, "net_threshold": new_cfg.network_threshold_kb})
-        app.dashboard_view.update_health(app._merged_context({"remaining": rem})); app.update_countdown_display(rem, max(1, app.total_countdown_seconds))
+        app._last_telemetry_snapshot.update({"inactivity_threshold_sec": eff_t, "idle_threshold": eff_t, "cpu_threshold": new_cfg.cpu_threshold_pct, "net_threshold": new_cfg.network_threshold_kb, "audio_inhibit_enabled": audio_enabled})
+        merged = app._merged_context({"remaining": rem})
+        app.dashboard_view.update_health(merged)
+        if hasattr(app, "telemetry_view"): app.telemetry_view.update_telemetry(merged)
+        app.update_countdown_display(rem, max(1, app.total_countdown_seconds))
     if not is_running_under_test(): sync_windows_startup(new_cfg, app.logger)
     app.terminal.append_log(f"Saved settings: Inact={new_cfg.user_inactivity_sec}s, Timer={new_cfg.master_shutdown_timer_min}m", "success")
 

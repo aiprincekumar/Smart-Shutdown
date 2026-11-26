@@ -6,6 +6,16 @@
 
 ---
 
+## [CHG-20261126-012] - 2026-11-26 08:11:44
+- **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
+- **Initiative:** `TASK-DASHBOARD-HEALTH-CARDS-001` (`AUTH-MGR-20261126-DASHBOARD-HEALTH-QA-001`)
+- **Entry File:** [`change_CHG-20261126-012_08-11-44.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-012_08-11-44.md)
+- **Target Scope:** `core/coordinator.py`, `core/coordinator_helpers.py`, `core/telemetry_collector.py`, `gui/app_event_bridge.py`, `gui/app_event_handlers.py`, `gui/components/dashboard_view.py`, `gui/components/health_summary.py`, `gui/unified_app.py`, `tests/*`
+- **Summary:** Extracted pure 6-card presentation formatters (`HEALTH_CARD_SPECS`, `format_audio_card`, `format_process_tree_card`, `format_health_tooltip`, `merge_health_telemetry`) into `gui/components/health_summary.py` (`234` L / `9,815` B, zero tkinter) and tightened `DashboardView` floating cards (`padx=10, pady=5`, outer `pady=2`, `chip padx=(0, 6)`, `328` L / `17,414` B) preserving `268x268` gauge and `38px` (`r=11`) tactile pills (`9446380`). Added `normalize_telemetry_defaults` in `core/telemetry_collector.py` (`146` L), extracted `core/coordinator_helpers.py` (`133` L) and `gui/app_event_handlers.py` (`126` L), and synced 5 audio/tree fields & resets across `core/coordinator.py` (`326` L / `20,805` B), `gui/app_event_bridge.py` (`290` L), and `gui/unified_app.py` (`275` L / `20,524` B). Authored `tests/` (`3` files), logged 5-tier `changes_log/` + `memory.md` (`S.No 024`), pruned `temp_prompt/dashboard_health_cards/`, and preserved live daemon (`smart_shutdown.lock` PID `15284`), `logs/smart_shutdown.log`, `smart_shutdown_settings.json`, and untracked `installer/RELEASE_v1.0.0.md`.
+- **Verification:** `python -B -m unittest discover -s tests -v` **15/15 PASSED** (`5.426s`, Exit 0), offscreen Tk (`780x520`, `780x520->720x500`, fresh `720x500`: `right_col reqh=306 <= 407/427`, `eligibility_card` unclipped, 6 cards `<= 329px <= 335px`, `268x268` gauge, `38px` pills, `tw<bw`) **PASS**, Rule 28 & BOM **11/11 PASS**, `py_compile`/`--help` Exit 0, `npm run rules:check` **22/22 PASS**, `gitleaks` (git + `--no-git`) **0** leaks.
+
+---
+
 ## [CHG-20261126-011] - 2026-11-26 08:03:37
 - **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
 - **Initiative:** `TASK-DASHBOARD-PILL-TACTILE-38-001` (`AUTH-MGR-20261126-PILL-TACTILE-QA-002`)

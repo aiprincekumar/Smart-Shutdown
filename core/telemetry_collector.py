@@ -113,6 +113,21 @@ class TelemetryCollector:
         }
 
 
+def normalize_telemetry_defaults(hw: Optional[Dict[str, Any]], config: SettingsConfig) -> Dict[str, Any]:
+    """Normalize hardware telemetry dict with config-synced audio and process-tree defaults."""
+    out = dict(hw) if hw else {}
+    audio_enabled = bool(getattr(config, "audio_inhibit_enabled", True))
+    out["audio_inhibit_enabled"] = audio_enabled
+    if not audio_enabled:
+        out["audio_active"] = False
+    out.setdefault("audio_active", False)
+    out.setdefault("worker_count", 0)
+    out.setdefault("memory_mb", 0)
+    out.setdefault("is_tree_busy", False)
+    out.setdefault("active_pids", [])
+    return out
+
+
 def evaluate_hardware_block(hw: Dict[str, Any], config: SettingsConfig) -> Optional[str]:
     """Return inhibition reason ('audio_active' or 'hardware_busy') if limits are exceeded."""
     if not hw:
@@ -128,4 +143,4 @@ def evaluate_hardware_block(hw: Dict[str, Any], config: SettingsConfig) -> Optio
     return None
 
 
-__all__ = ["TelemetryCollector", "evaluate_hardware_block"]
+__all__ = ["TelemetryCollector", "evaluate_hardware_block", "normalize_telemetry_defaults"]

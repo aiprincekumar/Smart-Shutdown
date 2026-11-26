@@ -9,13 +9,18 @@ from core.coordinator import SentinelCoordinator, LifecycleState
 from core.monitor_power import toggle_monitor_power_off
 from core.system_tray import create_system_tray_icon, start_tray_icon
 from gui.app_event_bridge import (
-    GuiLogQueueHandler, _read_safe_idle_seconds, apply_mode_change, apply_save_settings, build_merged_context,
-    classify_history_event, cleanup_app_runtime, clear_stale_blocker_reasons, dock_app_to_tray,
-    drain_coordinator_events, handle_pause_toggle_action, handle_snooze_action, resolve_initial_total_seconds, resolve_startup_mode,
-    settings_str_to_mode, sync_ai_snapshot, sync_mini_hud_badges, toggle_mini_hud_visibility,
+    GuiLogQueueHandler, apply_mode_change, apply_save_settings, build_merged_context,
+    cleanup_app_runtime, dock_app_to_tray, drain_coordinator_events,
+    handle_pause_toggle_action, handle_snooze_action, resolve_initial_total_seconds,
+    resolve_startup_mode, settings_str_to_mode, sync_ai_snapshot, sync_mini_hud_badges,
+    toggle_mini_hud_visibility,
+)
+from gui.app_event_handlers import (
+    handle_mode_change_event, handle_state_change_event, handle_telemetry_data_event,
+    handle_tick_event, sync_idle_snap, update_state_display,
 )
 from gui.components import FloatingMiniOverlay, TitleBarComponent, TargetMode, DashboardView, TelemetryView, LogsView, HistoryView, SettingsView
-from gui.components.status_resolver import ResolvedPillState, resolve_sentinel_pill_state, resolve_ai_pill_state, resolve_mode_enum, resolve_hud_mode_label, extract_timer_snapshot
+from gui.components.status_resolver import ResolvedPillState, resolve_sentinel_pill_state, resolve_ai_pill_state, resolve_mode_enum, extract_timer_snapshot
 from gui.dialogs import CloseConfirmDialog
 from gui.theme import BG_BASE, BORDER_CARD, ACCENT_CYAN, STATUS_GREEN, STATUS_AMBER, STATUS_RED, TEXT_PRIMARY, TEXT_SECONDARY, FONT_BADGE
 
@@ -93,6 +98,7 @@ class UnifiedSentinelApp(tk.Tk):
         self.switch_tab("dashboard"); self.settings_visible = True
         st0, rem0 = self._coord_state_name(), self._rem()
         idle_s, idle_t, snap0 = self._sync_idle_snap(st0)
+        self.dashboard_view.update_health(snap0)
         self._update_state_display(st0, context=snap0)
         self.update_countdown_display(rem0, max(1, self.total_countdown_seconds), idle_sec=idle_s, idle_threshold=idle_t)
 
@@ -131,15 +137,8 @@ class UnifiedSentinelApp(tk.Tk):
     def _rem(self) -> int:
         return getattr(self.coordinator, "remaining_countdown_seconds", self.total_countdown_seconds)
 
-    def _sync_idle_snap(self, st: str, idle_s: Optional[float] = None, **extra: Any) -> tuple:
-        fn = getattr(self.coordinator, "effective_user_inactivity_threshold", None)
-        idle_t = int(fn() if fn else getattr(self.config, "user_inactivity_sec", 60))
-        s = _read_safe_idle_seconds(self.coordinator) if idle_s is None else idle_s
-        snap = {"state": st, "idle_sec": s, "idle_threshold": idle_t, "inactivity_threshold_sec": idle_t, "has_user_input": False, **extra}
-        self._last_telemetry_snapshot.update(snap); self.dashboard_view._last_telemetry["has_user_input"] = snap["has_user_input"]; return s, idle_t, snap
-
-    def _merged_context(self, extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        return build_merged_context(self.coordinator, self._last_telemetry_snapshot, extra=extra)
+    def _sync_idle_snap(self, st: str, idle_s: Optional[float] = None, **extra: Any) -> tuple: return sync_idle_snap(self, st, idle_s=idle_s, extra=extra)
+    def _merged_context(self, extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]: return build_merged_context(self.coordinator, self._last_telemetry_snapshot, extra=extra)
 
     def _apply_timer_payload(self, data: Dict[str, Any]) -> bool:
         fb_rem = self._last_telemetry_snapshot.get("remaining", getattr(self.coordinator, "remaining_countdown_seconds", 0))
@@ -154,50 +153,12 @@ class UnifiedSentinelApp(tk.Tk):
         drain_coordinator_events(self)
         if self._is_running and self.winfo_exists(): self._event_after_id = self.after(100, self._process_events)
 
-    def _handle_mode_change_event(self, data: Dict[str, Any]) -> None:
-        try:
-            mode_enum = resolve_mode_enum(data.get("mode", data.get("target_mode", "")))
-            self._last_telemetry_snapshot["target_mode"] = mode_enum.value
-            if self.title_bar.current_mode != mode_enum: self.title_bar.set_mode(mode_enum)
-            if self.mini_hud and self.mini_hud.winfo_exists(): self.mini_hud.set_triple_status(mode=resolve_hud_mode_label(mode_enum, dry_run=self.dry_run))
-            self.dashboard_view.update_health(data)
-        except Exception as exc: self.logger.error(f"[GUI] Error handling mode change event: {exc}")
-
-    def _handle_tick_event(self, data: Dict[str, Any]) -> None:
-        st = data.get("state") or self._coord_state_name()
-        self.dashboard_view._last_telemetry["state"] = st
-        p = self._apply_timer_payload(data)
-        self._last_telemetry_snapshot.update({k: v for k, v in data.items() if k != "reason"})
-        self._last_telemetry_snapshot["is_paused"] = p
-        if st in self._ARMING_STATES: self._hud_disarmed = False
-        self._update_state_display(st, context=self._merged_context(data))
-
-    def _handle_state_change_event(self, data: Dict[str, Any]) -> None:
-        st, reason = data.get("state", "UNKNOWN"), data.get("reason")
-        if reason == "user_cancelled": self._hud_disarmed = True
-        elif st in self._ARMING_STATES: self._hud_disarmed = False
-        self._last_telemetry_snapshot.update(data); self._last_telemetry_snapshot["reason"] = reason
-        if "is_tree_busy" not in data and reason != "process_tree_busy": self._last_telemetry_snapshot.pop("is_tree_busy", None)
-        self._update_state_display(st, hud_state=("DISARMED" if reason == "user_cancelled" else None), context=self._merged_context(data))
-        self.terminal.append_log(f"Coordinator state: {st} (data: {data})", "info")
-        self.dashboard_view.update_health(data)
-        if any(k in data for k in self._TIMER_KEYS): self._apply_timer_payload(data)
-        classified = classify_history_event(st, reason, data)
-        if classified is not None: self.history_view.add_event(classified[0], classified[1], "Just now", classified[2])
-
-    def _handle_telemetry_data_event(self, data: Dict[str, Any]) -> None:
-        self._last_telemetry_snapshot.update(data)
-        clear_stale_blocker_reasons(self._last_telemetry_snapshot, data)
-        if data.get("state") in self._ARMING_STATES: self._hud_disarmed = False
-        self.telemetry_view.update_telemetry(data); self.dashboard_view.update_health(data); self._update_title_bar_ai(data)
-        self._update_state_display(data.get("state") or self._last_telemetry_snapshot.get("state") or self._coord_state_name(), context=self._merged_context())
-        if any(k in data for k in self._TIMER_KEYS): self._apply_timer_payload(data)
-
-    def _handle_log_event(self, data: Dict[str, Any]) -> None:
-        self.logs_view.append_log(data.get("message", str(data)), data.get("level", "info"))
-
-    def _handle_ai_state_change_event(self, data: Dict[str, Any]) -> None:
-        self._update_title_bar_ai(data); self.dashboard_view.update_health(data)
+    def _handle_mode_change_event(self, data: Dict[str, Any]) -> None: handle_mode_change_event(self, data)
+    def _handle_tick_event(self, data: Dict[str, Any]) -> None: handle_tick_event(self, data)
+    def _handle_state_change_event(self, data: Dict[str, Any]) -> None: handle_state_change_event(self, data)
+    def _handle_telemetry_data_event(self, data: Dict[str, Any]) -> None: handle_telemetry_data_event(self, data)
+    def _handle_log_event(self, data: Dict[str, Any]) -> None: self.logs_view.append_log(data.get("message", str(data)), data.get("level", "info"))
+    def _handle_ai_state_change_event(self, data: Dict[str, Any]) -> None: self._update_title_bar_ai(data); self.dashboard_view.update_health(data)
 
     def _update_title_bar_ai(self, data: Optional[Dict[str, Any]] = None) -> None:
         sync_ai_snapshot(self._last_telemetry_snapshot, data)
@@ -209,14 +170,7 @@ class UnifiedSentinelApp(tk.Tk):
         sync_mini_hud_badges(self, resolved, hud_state=hud_state, ctx=ctx)
 
     def _update_state_display(self, state_name: str, hud_state: Optional[str] = None, context: Optional[Dict[str, Any]] = None) -> None:
-        self.dashboard_view._last_telemetry["state"] = state_name
-        ctx = self._merged_context(context); self.dashboard_view._last_telemetry["has_user_input"] = ctx.get("has_user_input")
-        resolved = resolve_sentinel_pill_state(state_name, ctx)
-        self.title_bar.set_sentinel_state(resolved.title_bar_state); self.pill_status.config(text=f" {resolved.pill_state} ", bg=resolved.color)
-        sync_mini_hud_badges(self, resolved, hud_state=hud_state, ctx=ctx)
-        if hasattr(self, "telemetry_view"):
-            tv_ctx = {k: ctx[k] for k in self._TV_SYNC_KEYS if k in ctx}; tv_ctx["state"] = state_name
-            self.telemetry_view.update_telemetry(tv_ctx)
+        update_state_display(self, state_name, hud_state=hud_state, context=context)
 
     def update_countdown_display(self, remaining: int, total: int, is_paused: Optional[bool] = None, idle_sec: Optional[float] = None, idle_threshold: Optional[float] = None) -> None:
         is_p = is_paused if is_paused is not None else getattr(self.coordinator, "is_paused", False)
@@ -245,8 +199,8 @@ class UnifiedSentinelApp(tk.Tk):
     def _on_cancel_clicked(self) -> None:
         self.coordinator.cancel_and_reset(); self._hud_disarmed = True
         rem = self._rem(); self.total_countdown_seconds = rem
-        idle_s, idle_t, snap = self._sync_idle_snap(LifecycleState.IDLE_MONITORING.value, is_paused=False, remaining=rem, reason="user_cancelled")
-        self._last_telemetry_snapshot.pop("is_tree_busy", None); self._last_telemetry_snapshot.pop("user_inactivity_sec", None)
+        idle_s, idle_t, snap = self._sync_idle_snap(LifecycleState.IDLE_MONITORING.value, is_paused=False, remaining=rem, reason="user_cancelled", is_tree_busy=False, worker_count=0, memory_mb=0)
+        self._last_telemetry_snapshot.pop("user_inactivity_sec", None)
         self.dashboard_view.update_health(snap); self.telemetry_view.update_telemetry(snap); self._update_state_display(snap["state"], hud_state="DISARMED", context=snap); self.update_countdown_display(rem, rem, is_paused=False, idle_sec=idle_s, idle_threshold=idle_t)
         self.terminal.append_log("Countdown aborted and reset.", "warn")
 

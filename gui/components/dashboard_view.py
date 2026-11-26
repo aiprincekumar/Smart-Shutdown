@@ -9,25 +9,21 @@ import tkinter as tk
 from typing import Optional, Callable, Dict, Any, Tuple
 
 from gui.theme import (
-    BG_BASE, BG_SURFACE, BG_SUBSURFACE, BG_HOVER, BORDER_MUTED,
-    BORDER_CARD, BORDER_CARD_HOVER, TRACK_RING,
+    BG_BASE, BORDER_CARD,
     BG_BUTTON_ABORT, BORDER_BUTTON_ABORT, TEXT_BUTTON_ABORT,
     BG_BUTTON_BYPASS, BORDER_BUTTON_BYPASS, TEXT_BUTTON_BYPASS,
     BG_BUTTON_SHUTDOWN, BORDER_BUTTON_SHUTDOWN, TEXT_BUTTON_SHUTDOWN,
-    BG_BANNER_ELIGIBLE, BORDER_BANNER_ELIGIBLE, BG_BANNER_INHIBITED,
-    ACCENT_CYAN, ACCENT_PURPLE, STATUS_EMERALD, STATUS_AMBER,
-    STATUS_CRIMSON, STATUS_SLATE, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED,
-    FONT_CLOCK, FONT_BADGE, FONT_BODY, FONT_BODY_BOLD, FONT_HEALTH_HEADER,
+    BG_BANNER_ELIGIBLE, BORDER_BANNER_ELIGIBLE, STATUS_EMERALD, STATUS_SLATE, TEXT_PRIMARY,
+    FONT_BODY, FONT_BODY_BOLD, FONT_HEALTH_HEADER,
 )
 from core.monitor_power import toggle_monitor_power_off
 from gui.components.pill_button import PillButton
 from gui.components.circular_gauge import CircularCountdownGauge
-from gui.components.status_formatter import (
-    resolve_eligibility_banner,
-    render_mini_progress,
-    render_status_pill,
-    TelemetryTooltip,
+from gui.components.health_summary import (
+    HEALTH_CARD_SPECS, ai_pill_color, format_ai_card, format_audio_card, format_cpu_card,
+    format_health_tooltip, format_inactivity_card, format_net_card, format_process_tree_card, merge_health_telemetry,
 )
+from gui.components.status_formatter import resolve_eligibility_banner, render_mini_progress, render_status_pill, TelemetryTooltip
 
 
 class DashboardView(tk.Frame):
@@ -77,27 +73,29 @@ class DashboardView(tk.Frame):
         self.lbl_timer = self.lbl_clock
 
     def _build_health_card(self) -> None:
-        """Construct Informative Live Health Summary header and 4 independent floating cards."""
+        """Construct Informative Live Health Summary header and 6 independent floating cards."""
         self.health_card = tk.Frame(self.right_col, bg=BG_BASE, highlightthickness=0, padx=2, pady=2)
-        tk.Label(self.health_card, text="Informative Live Health Summary", font=FONT_HEALTH_HEADER, fg=TEXT_PRIMARY, bg=BG_BASE).pack(anchor="w", pady=(0, 6))
-        self.chip_cpu, self.bar_cpu = self._create_floating_card("CPU Activity", "0.0% [Safe]", STATUS_EMERALD)
-        self.chip_net, self.bar_net = self._create_floating_card("Network Transfer", "0.0 KB/s [Idle]", STATUS_EMERALD)
-        self.chip_ai, self.bar_ai = self._create_floating_card("Antigravity Task", "[ ✨ Ready ] All Done", STATUS_EMERALD, is_switch=True)
-        self.chip_inactivity, self.bar_inactivity = self._create_floating_card("User Inactivity", "0s [Threshold: 60s]", STATUS_AMBER)
+        tk.Label(self.health_card, text="Informative Live Health Summary", font=FONT_HEALTH_HEADER, fg=TEXT_PRIMARY, bg=BG_BASE).pack(anchor="w", pady=(0, 4))
+        self.health_cards: Dict[str, Tuple[tk.Label, tk.Canvas]] = {}
+        for spec in HEALTH_CARD_SPECS:
+            chip, bar = self._create_floating_card(spec.label, spec.default_chip, spec.default_color, is_switch=spec.is_switch)
+            self.health_cards[spec.key] = (chip, bar)
+            setattr(self, f"chip_{spec.key}", chip)
+            setattr(self, f"bar_{spec.key}", bar)
 
     def _create_floating_card(self, label_text: str, default_chip: str, chip_color: str, is_switch: bool = False) -> Tuple[tk.Label, tk.Canvas]:
         """Create an independent floating health card with green checkmark badge, metric label, and mini progress pill."""
         card_bg = "#141D2C"
-        card = tk.Frame(self.health_card, bg=card_bg, highlightbackground=BORDER_CARD, highlightthickness=1, padx=12, pady=7)
-        card.pack(fill="x", pady=3)
+        card = tk.Frame(self.health_card, bg=card_bg, highlightbackground=BORDER_CARD, highlightthickness=1, padx=10, pady=5)
+        card.pack(fill="x", pady=2)
         left_box = tk.Frame(card, bg=card_bg)
         left_box.pack(side="left", anchor="w")
-        tk.Label(left_box, text="✔ ", font=FONT_BODY_BOLD, fg=STATUS_EMERALD, bg=card_bg).pack(side="left")
-        tk.Label(left_box, text=label_text, font=FONT_BODY, fg=TEXT_PRIMARY, bg=card_bg).pack(side="left")
+        tk.Label(left_box, text="✔ ", font=FONT_BODY_BOLD, fg=STATUS_EMERALD, bg=card_bg, padx=0).pack(side="left")
+        tk.Label(left_box, text=label_text, font=FONT_BODY, fg=TEXT_PRIMARY, bg=card_bg, padx=0).pack(side="left")
         right_box = tk.Frame(card, bg=card_bg)
         right_box.pack(side="right", anchor="e")
-        chip = tk.Label(right_box, text=default_chip, font=FONT_BODY_BOLD, fg=chip_color, bg=card_bg)
-        chip.pack(side="left", padx=(0, 8))
+        chip = tk.Label(right_box, text=default_chip, font=FONT_BODY_BOLD, fg=chip_color, bg=card_bg, padx=0)
+        chip.pack(side="left", padx=(0, 6))
         bar = tk.Canvas(right_box, width=44, height=10, bg=card_bg, highlightthickness=0, bd=0)
         bar.pack(side="left")
         if is_switch: self._update_status_pill(bar, False, STATUS_SLATE)
@@ -130,15 +128,7 @@ class DashboardView(tk.Frame):
 
     def _format_tooltip_details(self) -> str:
         """Format a rich hover summary of system telemetry metrics."""
-        if not self._last_telemetry:
-            return ""
-        cpu = self._last_telemetry.get("cpu_percent", self._last_telemetry.get("cpu_pct", 0.0))
-        net = self._last_telemetry.get("net_total_kb", self._last_telemetry.get("net_kb_s", 0.0))
-        idle = int(self._last_telemetry.get("idle_sec", 0))
-        mode = self._last_telemetry.get("target_mode", "LIVE")
-        state = self._last_telemetry.get("state", "IDLE_MONITORING")
-        workers = self._last_telemetry.get("subagent_count", self._last_telemetry.get("workers", 0))
-        return f"[{mode}] State: {state} | CPU: {cpu:.1f}% | Net: {net:.1f} KB/s | Idle: {idle}s | Workers: {workers}"
+        return format_health_tooltip(self._last_telemetry)
 
     def _build_action_grid(self) -> None:
         """Construct balanced 2x3 action grid holding exactly 6 ergonomic action pill buttons."""
@@ -240,68 +230,43 @@ class DashboardView(tk.Frame):
         """Update live telemetry chips, mini progress pills, and dynamic eligibility banner."""
         if not telemetry_data:
             return
-        if "state" in telemetry_data and "reason" not in telemetry_data:
-            self._last_telemetry.pop("reason", None)
-        self._last_telemetry.update(telemetry_data)
-        if "subagent_count" in telemetry_data and "workers" not in telemetry_data:
-            self._last_telemetry["workers"] = telemetry_data["subagent_count"]
-        elif "workers" in telemetry_data and "subagent_count" not in telemetry_data:
-            self._last_telemetry["subagent_count"] = telemetry_data["workers"]
+        merge_health_telemetry(self._last_telemetry, telemetry_data)
         cpu_safe, net_idle = self._update_hw_telemetry(self._last_telemetry)
         ai_st = self._update_ai_telemetry(self._last_telemetry)
+        self._update_audio_tree_telemetry(self._last_telemetry)
         self._update_eligibility_banner(self._last_telemetry, cpu_safe, net_idle, ai_st)
 
     def _update_hw_telemetry(self, data: Dict[str, Any]) -> Tuple[bool, bool]:
         """Update CPU, Network, and User Inactivity telemetry indicators."""
-        cpu = data.get("cpu_percent", data.get("cpu_pct", 0.0))
-        cpu_safe = cpu < data.get("cpu_threshold", 15.0)
-        cpu_color = STATUS_EMERALD if cpu_safe else STATUS_AMBER
-        self.chip_cpu.config(text=f"{cpu:.1f}% [Safe]" if cpu_safe else f"{cpu:.1f}% [Spike]", fg=cpu_color)
-        self._update_mini_bar(self.bar_cpu, cpu / 100.0, cpu_color)
+        cpu_txt, cpu_col, cpu_pct, cpu_safe = format_cpu_card(data)
+        self.chip_cpu.config(text=cpu_txt, fg=cpu_col)
+        self._update_mini_bar(self.bar_cpu, cpu_pct, cpu_col)
 
-        net = data.get("net_total_kb", data.get("net_kb_s", 0.0))
-        net_thresh = data.get("net_threshold", 50.0)
-        net_idle = (net < net_thresh) if net_thresh > 0.0 else (net <= 0.0)
-        net_color = STATUS_EMERALD if net_idle else STATUS_AMBER
-        self.chip_net.config(text=f"{net:.1f} KB/s [Idle]" if net_idle else f"{net:.1f} KB/s [Busy]", fg=net_color)
-        self._update_mini_bar(self.bar_net, net / max(net_thresh * 2, 50.0), net_color)
+        net_txt, net_col, net_pct, net_idle = format_net_card(data)
+        self.chip_net.config(text=net_txt, fg=net_col)
+        self._update_mini_bar(self.bar_net, net_pct, net_col)
 
-        raw_idle = data.get("idle_sec") if data.get("idle_sec") is not None else data.get("user_inactivity_sec")
-        raw_thresh = data.get("inactivity_threshold_sec") if data.get("inactivity_threshold_sec") is not None else data.get("idle_threshold")
-        idle_s = int(0 if raw_idle is None else raw_idle)
-        thresh_s = int(60 if raw_thresh is None else raw_thresh)
-        inact_color = STATUS_EMERALD if idle_s >= thresh_s else STATUS_AMBER
-        if thresh_s <= 60:
-            txt = f"{idle_s}s [Threshold: {thresh_s}s]"
-        elif thresh_s % 60 == 0 and idle_s % 60 == 0:
-            txt = f"{idle_s // 60} mins [Threshold: {thresh_s // 60} mins]"
-        else:
-            txt = f"{idle_s // 60}m {idle_s % 60}s [Threshold: {thresh_s // 60}m]"
-        self.chip_inactivity.config(text=txt, fg=inact_color)
-        self._update_mini_bar(self.bar_inactivity, idle_s / max(thresh_s, 1), inact_color)
+        inact_txt, inact_col, inact_pct = format_inactivity_card(data)
+        self.chip_inactivity.config(text=inact_txt, fg=inact_col)
+        self._update_mini_bar(self.bar_inactivity, inact_pct, inact_col)
         return cpu_safe, net_idle
 
     def _update_ai_telemetry(self, data: Dict[str, Any]) -> str:
         """Update Antigravity AI Engine status chip and indicator pill."""
-        ai_st = str(data.get("ai_state", self._last_telemetry.get("ai_state", "READY")) or "READY").upper()
-        raw_workers = data.get("subagent_count", data.get("workers", self._last_telemetry.get("workers", 0)))
-        try:
-            workers = int(0 if raw_workers is None else raw_workers)
-        except (TypeError, ValueError):
-            workers = 0
-        if "WAITING" in ai_st or "INPUT" in ai_st:
-            self.chip_ai.config(text="[ 💬 Waiting ] Pending", fg=ACCENT_PURPLE)
-            self._update_status_pill(self.bar_ai, False, ACCENT_PURPLE)
-        elif workers > 0:
-            self.chip_ai.config(text=f"Active AI Work ({workers} Active)", fg=ACCENT_CYAN)
-            self._update_status_pill(self.bar_ai, True, STATUS_EMERALD)
-        elif "WORK" in ai_st or "BUSY" in ai_st:
-            self.chip_ai.config(text="[ ⚙️ Working ] Background Tasks", fg=STATUS_AMBER)
-            self._update_status_pill(self.bar_ai, True, STATUS_AMBER)
-        else:
-            self.chip_ai.config(text="[ ✨ Ready ] All Done", fg=STATUS_EMERALD)
-            self._update_status_pill(self.bar_ai, False, STATUS_SLATE)
+        text, chip_color, dot_active, ai_st = format_ai_card(data)
+        self.chip_ai.config(text=text, fg=chip_color)
+        self._update_status_pill(self.bar_ai, dot_active, ai_pill_color(chip_color, dot_active))
         return ai_st
+
+    def _update_audio_tree_telemetry(self, data: Dict[str, Any]) -> None:
+        """Update Audio Stream and Process Tree telemetry chips and status pills."""
+        audio_txt, audio_col, audio_active = format_audio_card(data)
+        self.chip_audio.config(text=audio_txt, fg=audio_col)
+        self._update_status_pill(self.bar_audio, audio_active, audio_col)
+
+        tree_txt, tree_col, tree_active = format_process_tree_card(data)
+        self.chip_tree.config(text=tree_txt, fg=tree_col)
+        self._update_status_pill(self.bar_tree, tree_active, tree_col)
 
     def _update_eligibility_banner(self, telemetry_data: Dict[str, Any], cpu_safe: bool, net_idle: bool, ai_st: str) -> None:
         """Update eligibility banner text, icon, border glow, and container background via status_formatter."""
@@ -318,12 +283,9 @@ class DashboardView(tk.Frame):
 
     def _recalculate_eligibility(self) -> None:
         """Recalculate eligibility banner from last known telemetry state."""
-        cpu = self._last_telemetry.get("cpu_percent", self._last_telemetry.get("cpu_pct", 0.0))
-        net = self._last_telemetry.get("net_total_kb", self._last_telemetry.get("net_kb_s", 0.0))
-        cpu_safe = cpu < self._last_telemetry.get("cpu_threshold", 15.0)
-        net_thresh = self._last_telemetry.get("net_threshold", 50.0)
-        net_idle = (net < net_thresh) if net_thresh > 0.0 else (net <= 0.0)
-        ai_st = str(self._last_telemetry.get("ai_state", "READY")).upper()
+        _, _, _, cpu_safe = format_cpu_card(self._last_telemetry)
+        _, _, _, net_idle = format_net_card(self._last_telemetry)
+        _, _, _, ai_st = format_ai_card(self._last_telemetry)
         self._update_eligibility_banner(self._last_telemetry, cpu_safe, net_idle, ai_st)
 
     def set_pause_state(self, is_paused: bool, is_idle: bool = False) -> None:
@@ -352,20 +314,15 @@ class DashboardView(tk.Frame):
 
     def _handle_pause(self) -> None:
         if self.on_pause: self.on_pause()
-
     def _handle_snooze(self) -> None:
         if self.on_snooze: self.on_snooze()
-
     def _handle_toggle_monitor(self) -> None:
         if self.on_toggle_monitor: self.on_toggle_monitor()
         else: toggle_monitor_power_off()
-
     def _handle_abort(self) -> None:
         if self.on_abort: self.on_abort()
-
     def _handle_bypass_toggle(self) -> None:
         if self.on_bypass_toggle: self.on_bypass_toggle()
         else: self.set_bypass_state(not self.bypass_active)
-
     def _handle_shutdown_now(self) -> None:
         if self.on_shutdown_now: self.on_shutdown_now()
