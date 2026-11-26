@@ -6,6 +6,16 @@
 
 ---
 
+## [CHG-20261126-013] - 2026-11-26 08:19:40
+- **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
+- **Initiative:** `TASK-DASHBOARD-PILL-HEIGHT-40-001` (`AUTH-MGR-20261126-PILL-HEIGHT-40-001` / `QA-002` / `REL-003`)
+- **Entry File:** [`change_CHG-20261126-013_08-19-40.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-013_08-19-40.md)
+- **Target Scope:** `gui/components/dashboard_view.py`
+- **Summary:** Updated the 6 action pill buttons in `DashboardView._build_action_grid` (`gui/components/dashboard_view.py`, line 154) from `height=38` to `height=40` while keeping `corner_radius=11`, tactile 3D surface (`pill_button.py`), `268x268` `circular_gauge.py`, and `right_col` untouched; logged 5-tier `changes_log/` + `memory.md` (`S.No 025`), committed locally offline on `master`, and preserved live daemon (`smart_shutdown.lock` PID `15284`), `logs/smart_shutdown.log`, `smart_shutdown_settings.json`, and untracked `installer/RELEASE_v1.0.0.md`.
+- **Verification:** `py_compile` & `--help` **PASS**, offscreen Tk (`780x520` & `720x500`: `winfo_height()==40`, `_curr_h==40`, `corner_radius=11`, tactile 3D RGB diff, `268x268` gauge, zero clipping) **PASS**, `npm run rules:check` **22/22 PASS**, `gitleaks` **0** leaks.
+
+---
+
 ## [CHG-20261126-012] - 2026-11-26 08:11:44
 - **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
 - **Initiative:** `TASK-DASHBOARD-HEALTH-CARDS-001` (`AUTH-MGR-20261126-DASHBOARD-HEALTH-QA-001`)

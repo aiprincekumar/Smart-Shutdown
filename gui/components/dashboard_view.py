@@ -151,7 +151,7 @@ class DashboardView(tk.Frame):
             btn_w = 90 if c == 0 else 110
             btn = PillButton(
                 self.grid_frame, text=txt, command=cmd, normal_bg=bg, hover_bg=hbg, pressed_bg=pbg,
-                border_color=bdr, hover_border=hbdr, pressed_border=pbdr, fg=fg, parent_bg=BG_BASE, width=btn_w, corner_radius=11, height=38,
+                border_color=bdr, hover_border=hbdr, pressed_border=pbdr, fg=fg, parent_bg=BG_BASE, width=btn_w, corner_radius=11, height=40,
             )
             btn.grid(row=r, column=c, padx=2, pady=3, sticky="ew")
             setattr(self, attr, btn)

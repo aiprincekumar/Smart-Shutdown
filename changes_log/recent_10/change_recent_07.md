@@ -1,27 +1,26 @@
-﻿# Detailed Change Entry: CHG-20261126-006
+﻿# Detailed Change Entry: CHG-20261126-007
 
-> **Change ID:** `CHG-20261126-006`  
-> **Timestamp:** `2026-11-26 02:57:15`  
+> **Change ID:** `CHG-20261126-007`  
+> **Timestamp:** `2026-11-26 03:07:36`  
 > **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)  
-> **Target Scope:** `git-history-reset-clean-orphan-baseline`  
-> **Initiative:** `TASK-GIT-HISTORY-RESET-001`  
-> **Authorization Tokens:** `AUTH-MGR-20261126-GITHISTORY-RESET-001`  
-> **Governing Standards:** Universal Rule 1 (Supreme CEO), Rule 5 & 8 (UTF-8 BOM), Rule 6 (5-Tier Changes Log), Rule 12 (DevOps & Release), Rule 15 (Git Gatekeeper), Rule 16 (Developer Profile), Rule 20 (Diagnostic Matrix), Rule 21 & 23 (Project Memory Dossier), Rule 27 (Rules Health Sentinel), Rule 28 (Code Modularity)
+> **Target Scope:** `smart-shutdown-bat-direct-gui-and-launchers-audit`  
+> **Initiative:** `TASK-BAT-DIRECT-GUI-001`  
+> **Authorization Token:** `AUTH-MGR-20261126-BATGUI-001`  
+> **Governing Standards:** Universal Rule 1 (Supreme CEO), Rule 5 & 8 (UTF-8 BOM), Rule 6 (5-Tier Changes Log), Rule 12 (DevOps & Release), Rule 15 (Git Gatekeeper), Rule 16 (Developer Profile), Rule 20 (Diagnostic Matrix), Rule 21 & 23 (Project Memory Dossier), Rule 27 (Rules Health Sentinel)
 
 ---
 
 ## 📋 1. Purpose & Architectural Rationale
 
-Establish a single, clean orphan initial commit baseline on `master` for **Smart Shutdown** (`c:\Users\Atul Verma\Desktop\Smart Shutdown`) under explicit User & Level 2 Manager authorization (`TASK-GIT-HISTORY-RESET-001`), purging all prior local commits and unreachable git objects without pushing to GitHub or disrupting live daemon `PID 8736`:
-1. **Pre-Commit Governance Sync (UTF-8 with BOM):**
-   - Updated workspace `memory.md` Section `0` (`TASK-GIT-HISTORY-RESET-001`), rolled `TASK-PRE-GITHUB-CLEANUP-001` into Section `0.1`, and added Diagnostic Matrix entry `S.No 018` while keeping `memory.md < 16,384` bytes (`< 16 KB`).
-   - Recorded `CHG-20261126-006` across all 5 tiers (`entries/`, `daily/`, `summary/`, `master/`, `recent_10/`), keeping `master_changes_log.md < 24 KB`.
-   - Left `CHANGELOG.md`, `cliff.toml`, `package.json`, `.gitignore`, `.gitleaksignore`, `.agents/`, `core/`, `gui/`, `launchers/`, `scripts/`, `smart_shutdown.py`, `Smart_Shutdown.bat`, and `smart_shutdown_settings.json` untouched.
-2. **Orphan History Reset & Deep Object Purge:**
-   - Staged clean working tree via `git checkout --orphan clean_root` and `git add -A`, verified zero `tests/`, `temp_prompt/`, `archive/`, `ui_mockup_prompt.md`, `.bak`, `.pytest_cache/`, `__pycache__/`, `logs/`, or `*.lock` entries, and committed `chore(init): initialize clean Smart Shutdown repository baseline` as `Atul Verma <aiprincekumar010100@gmail.com>`.
-   - Replaced `master` (`git branch -D master` + `git branch -m clean_root master`), deleted `.git/ORIG_HEAD`, expired all reflogs (`git reflog expire --expire=now --expire-unreachable=now --all`), and ran `git gc --prune=now --aggressive`.
-3. **Post-Commit Global Memory Sync:**
-   - Updated `C:\Users\Atul Verma\.gemini\memory.md` Section `0` in-place (`<= 665` lines, net bytes `<= 0`, `BOM=True`) with the resulting single commit hash while keeping `git remote -v` empty (strictly offline).
+Eliminate the legacy interactive menu, post-execution `SW_HIDE` console hang, and UTF-8 BOM batch prefix error in `Smart_Shutdown.bat` while verifying all 10 preset batch wrappers in `launchers/` without modifying `launchers/*.bat` or disrupting live daemon `PID 8736`:
+1. **`launchers/` Audit (`00..09`):**
+   - Verified all 10 `.bat` files in `launchers/` exist and every referenced `..\scripts\*.py` target exists on disk (10/10 verified, zero edits to `launchers/`).
+2. **`Smart_Shutdown.bat` Direct GUI Rewrite (`BOM=False`, `CRLF`, `BareLF=0`):**
+   - Started Line 1 cleanly with `@echo off` (no UTF-8 BOM), Line 2 `@chcp 65001 >nul`, `setlocal EnableDelayedExpansion`, and `:: Smart Shutdown - Direct Unified Desktop GUI Launcher`.
+   - Preserved `SCRIPT_DIR`, `ENGINE_PATH`, 5-step Python interpreter lookup, `--no-pause` filtering, and missing-Python/missing-engine `[ERROR]` guards.
+   - Removed `:menu`, `:opt0..:opt7`, `0..7` routing, and post-execution `:end` `pause`; added direct `FORWARD_ARGS` pass-through or `--gui` default launch and `exit /b !EXIT_CODE!`.
+3. **Governance Sync & Local Offline Commit:**
+   - Updated workspace `memory.md` (Section `0` + `S.No 019`, `< 16 KB`, `BOM=True`) and 5-tier `changes_log/` (`CHG-20261126-007`, `BOM=True`); preserved `CHANGELOG.md` untouched and kept `git remote -v` empty (offline only).
 
 ---
 
@@ -29,13 +28,14 @@ Establish a single, clean orphan initial commit baseline on `master` for **Smart
 
 | S.No | File / Scope | Root Cause | Proposed Fix | Post-Fix Impact | Phase # | Test Gate |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | Local `.git` history & refs | Legacy multi-commit local history still held historical refs, reflogs, and objects after cleanup | Create orphan branch `clean_root`, commit clean baseline on `master`, remove `.git/ORIG_HEAD`, expire reflogs, run `git gc --prune=now --aggressive` | Single clean initial commit on `master`; old objects purged; zero remote push | Reset | `git rev-list --count HEAD == 1`, `git show-ref`, purged SHAs fail `cat-file -e` |
-| 2 | `memory.md`, `changes_log/` (`CHG-20261126-006`), global `memory.md` | Governance ledger needed pre-commit sync and post-commit hash synchronization | Update `memory.md` (`< 16 KB`, `S.No 018`), 5-tier `changes_log/` (`master < 24 KB`), and global `memory.md` (`<= 665` lines, net `<= 0` B) | 100% Rule 6/21/23/28 & UTF-8 BOM compliance | Gov | `npm run rules:check` 22/22, `gitleaks` 0 leaks, BOM & size verified |
+| 1 | `launchers/00..09_*.bat` | Needed audit confirming all 10 preset batch wrappers resolve valid `..\scripts\*.py` targets | Read-only audit of all 10 `launchers/*.bat` and `Test-Path` verification of `scripts/*.py` | 10/10 launcher targets verified intact with zero edits to `launchers/` | Audit | 10/10 target scripts `Exists=True` |
+| 2 | `Smart_Shutdown.bat` | File carried UTF-8 BOM (`'∩╗┐'` batch error), legacy `:menu`/`0..7`, and post-execution `:end` `pause` hanging after `SW_HIDE` | Rewrite `BOM=False`, `CRLF`, `BareLF=0`; preserve 5-step Python lookup & `--no-pause`; launch `--gui` directly or forward `FORWARD_ARGS` and exit `!EXIT_CODE!` | Instant direct Unified GUI launch on double-click and clean CLI exit codes | Rewrite | `BOM=False`, `CRLF=86`, `BareLF=0`, `--help` & `--startup-status` Exit `0` |
+| 3 | `memory.md`, `changes_log/` (`CHG-20261126-007`), global `memory.md` | Governance ledgers required `TASK-BAT-DIRECT-GUI-001` & `S.No 019` synchronization | Update `memory.md` (`< 16 KB`), 5-tier `changes_log/` (`master < 24 KB`), and global `memory.md` (`<= 665` lines, net `<= 0` B) | 100% Rule 6/21/23 & UTF-8 BOM compliance | Gov | `rules:check` 22/22, `gitleaks` 0 leaks, BOM & size verified |
 
 ---
 
 ## 🧪 3. Verification & Test Gate Proof
 
-- **Orphan Reset Verification:** `git rev-list --count HEAD == 1`, `git show-ref` lists only `refs/heads/master`, `git status --short` empty, `git remote -v` empty, and `git cat-file -e` fails for purged commits.
-- **Rules Health & Security:** `npm run rules:check` (`22/22` PASS), `gitleaks detect --redact` (`0` leaks), live daemon `PID 8736` untouched.
-- **BOM & Headroom:** All updated `.md` files verified with UTF-8 BOM (`0xEF,0xBB,0xBF`), `memory.md < 16,384 B`, `master_changes_log.md < 24,576 B`.
+- **Byte & Line-Ending Check (`Smart_Shutdown.bat`):** `BOM=False`, `CRLF=86`, `BareLF=0`.
+- **Smoke Checks (`PYTHONDONTWRITEBYTECODE=1`):** `cmd /c "Smart_Shutdown.bat --help --no-pause"` (Exit `0`) and `cmd /c "Smart_Shutdown.bat --startup-status --no-pause"` (Exit `0`), zero `__pycache__/` created, live daemon `PID 8736` untouched.
+- **Rules Health & Security:** `npm run rules:check` (`22/22` PASS), `gitleaks detect --redact --no-banner` (`0` leaks), UTF-8 BOM & size ceilings verified.

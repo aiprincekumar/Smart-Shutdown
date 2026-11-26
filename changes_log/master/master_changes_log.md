@@ -2,6 +2,15 @@
 
 > **Archive Index:** Entries from `2026-11-01` to `2026-11-24` (`CHG-20261101-001` .. `CHG-20261124-006`) archived in [`master_changes_log_archive_2026-11.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/master/master_changes_log_archive_2026-11.md).
 
+## [CHG-20261126-013] - 2026-11-26 08:19:40
+- **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
+- **Entry File:** [`change_CHG-20261126-013_08-19-40.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-013_08-19-40.md)
+- **Target Scope:** `gui/components/dashboard_view.py`
+- **Summary:** Updated 6 action pill buttons in `DashboardView._build_action_grid` (`gui/components/dashboard_view.py`, line 154) from `height=38` to `height=40` while keeping `corner_radius=11`, tactile 3D surface (`pill_button.py`), `268x268` `circular_gauge.py`, and `right_col` untouched (`TASK-DASHBOARD-PILL-HEIGHT-40-001` / `AUTH-MGR-20261126-PILL-HEIGHT-40-001` / `QA-002` / `REL-003`); synced `memory.md` (`S.No 025`), 5-tier logs, and committed locally on `master` (offline).
+- **Verification:** `py_compile`/`--help` PASS, offscreen Tk (`780x520` & `720x500`, `winfo_height()==40`, `_curr_h==40`, `corner_radius=11`, tactile 3D RGB diff, `268x268` gauge, zero clipping) PASS, `rules:check` 22/22, `gitleaks` 0 leaks.
+
+---
+
 ## [CHG-20261126-012] - 2026-11-26 08:11:44
 - **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
 - **Entry File:** [`change_CHG-20261126-012_08-11-44.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-012_08-11-44.md)
