@@ -32,13 +32,27 @@ if hasattr(sys.stdout, 'reconfigure'):
 if hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
+def is_compiled_runtime() -> bool:
+    """Return True when running from a frozen or Nuitka-compiled executable."""
+    return bool(getattr(sys, "frozen", False) or "__compiled__" in globals())
+
+
+IS_COMPILED = is_compiled_runtime()
 WORKSPACE_DIR = Path(__file__).resolve().parent.parent
+APP_DIR = Path(sys.executable).resolve().parent if IS_COMPILED else WORKSPACE_DIR
+DATA_DIR = (
+    Path(os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local")) / "Smart Shutdown"
+    if IS_COMPILED
+    else WORKSPACE_DIR
+)
+if IS_COMPILED:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_BRAIN_DIR = Path.home() / ".gemini" / "antigravity" / "brain"
-DEFAULT_LOG_DIR = WORKSPACE_DIR / "logs"
+DEFAULT_LOG_DIR = DATA_DIR / "logs"
 DEFAULT_LOG_FILE = DEFAULT_LOG_DIR / "smart_shutdown.log"
-LOCK_FILE = WORKSPACE_DIR / "smart_shutdown.lock"
-DEFAULT_SETTINGS_FILE = WORKSPACE_DIR / "smart_shutdown_settings.json"
-LEGACY_SETTINGS_FILE = WORKSPACE_DIR / "sentinel_settings.json"
+LOCK_FILE = DATA_DIR / "smart_shutdown.lock"
+DEFAULT_SETTINGS_FILE = DATA_DIR / "smart_shutdown_settings.json"
+LEGACY_SETTINGS_FILE = DATA_DIR / "sentinel_settings.json"
 
 DEFAULT_COUNTDOWN_SECONDS = 900
 DEFAULT_IDLE_BUFFER_SECONDS = 60
@@ -122,10 +136,11 @@ def _is_smart_shutdown_pid(pid: int) -> bool:
         return False
     except Exception:
         return True
-    if name.startswith("python") or "smart_shutdown" in name:
+    if name.startswith("python") or "smart_shutdown" in name or "smartshutdown" in name:
         return True
     try:
-        return "smart_shutdown" in " ".join(proc.cmdline() or ()).lower()
+        cmdline = " ".join(proc.cmdline() or ()).lower()
+        return "smart_shutdown" in cmdline or "smartshutdown" in cmdline
     except Exception:
         return False
 

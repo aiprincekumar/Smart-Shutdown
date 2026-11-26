@@ -37,3 +37,7 @@ temp_prompt/
 smart_shutdown_settings.json
 sentinel_settings.json
 *.tmp
+
+# Build & Installer Artifacts
+dist/
+output/

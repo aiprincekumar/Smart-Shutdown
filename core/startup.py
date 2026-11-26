@@ -14,6 +14,7 @@ from core.config import (
     WORKSPACE_DIR,
     DEFAULT_COUNTDOWN_SECONDS,
     DEFAULT_IDLE_BUFFER_SECONDS,
+    is_compiled_runtime,
     log_telemetry_event
 )
 
@@ -70,8 +71,15 @@ def startup_matches_settings(countdown: int, idle_buffer: int, mini_hud: bool) -
         return False
 
 
+def _is_compiled() -> bool:
+    """Return True when running from a frozen or Nuitka-compiled executable."""
+    return is_compiled_runtime() or ("__compiled__" in globals())
+
+
 def resolve_python_executable() -> str:
-    """Prefers pythonw.exe to prevent console flashing on boot; falls back to sys.executable."""
+    """Returns sys.executable when compiled; otherwise prefers pythonw.exe to prevent console flashing."""
+    if _is_compiled():
+        return sys.executable
     try:
         current_exe = Path(sys.executable)
         pythonw = current_exe.with_name("pythonw.exe")
@@ -84,13 +92,16 @@ def resolve_python_executable() -> str:
 
 def _build_startup_ps_script(lnk_path: Path, py_exe: str, arguments: str) -> str:
     """Build PowerShell script for creating the Windows Startup .lnk shortcut."""
+    compiled = _is_compiled()
+    working_dir = str(Path(sys.executable).resolve().parent) if compiled else str(WORKSPACE_DIR)
+    icon_location = f"{sys.executable},0" if compiled else "shell32.dll,27"
     return f"""
 $WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut('{str(lnk_path)}')
 $Shortcut.TargetPath = '{py_exe}'
 $Shortcut.Arguments = '{arguments}'
-$Shortcut.WorkingDirectory = '{str(WORKSPACE_DIR)}'
-$Shortcut.IconLocation = 'shell32.dll,27'
+$Shortcut.WorkingDirectory = '{working_dir}'
+$Shortcut.IconLocation = '{icon_location}'
 $Shortcut.Description = 'Smart Shutdown (Mini HUD)'
 $Shortcut.WindowStyle = 7
 $Shortcut.Save()
@@ -134,9 +145,12 @@ def enable_startup(
     logger = logger or logging.getLogger("SmartShutdown")
     lnk_path = get_startup_shortcut_path()
     lnk_path.parent.mkdir(parents=True, exist_ok=True)
-    target = target_script if target_script is not None else (WORKSPACE_DIR / "smart_shutdown.py")
     py_exe = resolve_python_executable()
-    arg_parts = [f'"{str(target)}"']
+    if _is_compiled():
+        arg_parts = []
+    else:
+        target = target_script if target_script is not None else (WORKSPACE_DIR / "smart_shutdown.py")
+        arg_parts = [f'"{str(target)}"']
     if mini_hud:
         arg_parts.append("--mini-hud")
     arg_parts.extend(["--countdown", str(countdown), "--idle-buffer", str(idle_buffer)])
