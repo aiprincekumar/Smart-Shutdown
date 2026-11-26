@@ -69,7 +69,7 @@ class DashboardView(tk.Frame):
         self.update_countdown(900, 900, False)
 
     def _build_gauge_card(self) -> None:
-        """Instantiate modular 240x240 CircularCountdownGauge and link backward compatibility aliases."""
+        """Instantiate modular 268x268 CircularCountdownGauge and link backward compatibility aliases."""
         self.gauge_card = CircularCountdownGauge(self.left_col)
         self.canvas_gauge = self.gauge_card.canvas
         self.lbl_clock = self.gauge_card.lbl_clock
@@ -143,10 +143,12 @@ class DashboardView(tk.Frame):
 
     def _build_action_grid(self) -> None:
         """Construct balanced 2x3 action grid holding exactly 6 ergonomic action pill buttons."""
-        self.grid_frame = tk.Frame(self.left_col, bg=BG_BASE, highlightthickness=0, padx=4, pady=4)
-        for c in range(3): self.grid_frame.grid_columnconfigure(c, weight=1, uniform="btn_col")
-        self.grid_frame.grid_rowconfigure(0, weight=1)
-        self.grid_frame.grid_rowconfigure(1, weight=1)
+        self.grid_frame = tk.Frame(self.left_col, bg=BG_BASE, highlightthickness=0, padx=2, pady=4)
+        self.grid_frame.grid_columnconfigure(0, weight=5)
+        self.grid_frame.grid_columnconfigure(1, weight=6)
+        self.grid_frame.grid_columnconfigure(2, weight=6)
+        self.grid_frame.grid_rowconfigure(0, weight=0)
+        self.grid_frame.grid_rowconfigure(1, weight=0)
 
         btn_specs = [
             ("btn_pause", "|| Pause", self._handle_pause, BG_BUTTON_SLATE, "#26344B", "#151E2B", BORDER_BUTTON_SLATE, "#3E5272", "#3E5272", "#FFFFFF", 0, 0),
@@ -157,11 +159,12 @@ class DashboardView(tk.Frame):
             ("btn_shutdown", "⚡ Shutdown Now", self._handle_shutdown_now, BG_BUTTON_SHUTDOWN, "#451A20", "#200D10", BORDER_BUTTON_SHUTDOWN, "#F87171", "#EF4444", TEXT_BUTTON_SHUTDOWN, 1, 2),
         ]
         for attr, txt, cmd, bg, hbg, pbg, bdr, hbdr, pbdr, fg, r, c in btn_specs:
+            btn_w = 90 if c == 0 else 110
             btn = PillButton(
                 self.grid_frame, text=txt, command=cmd, normal_bg=bg, hover_bg=hbg, pressed_bg=pbg,
-                border_color=bdr, hover_border=hbdr, pressed_border=pbdr, fg=fg, parent_bg=BG_BASE, corner_radius=12, height=42,
+                border_color=bdr, hover_border=hbdr, pressed_border=pbdr, fg=fg, parent_bg=BG_BASE, width=btn_w, corner_radius=10, height=36,
             )
-            btn.grid(row=r, column=c, padx=3, pady=3, sticky="nsew")
+            btn.grid(row=r, column=c, padx=2, pady=3, sticky="ew")
             setattr(self, attr, btn)
 
         self.btn_cancel = self.btn_abort
@@ -208,7 +211,7 @@ class DashboardView(tk.Frame):
         self.right_col.grid(row=0, column=1, sticky="nsew", padx=(4, 8), pady=4)
 
         self.gauge_card.pack(fill="both", expand=True, pady=(0, 4))
-        self.grid_frame.pack(fill="both", expand=True, pady=(4, 0))
+        self.grid_frame.pack(fill="x", expand=False, pady=(4, 0))
         self.health_card.pack(fill="both", expand=True, pady=(0, 4))
         if hasattr(self, "eligibility_card"):
             self.eligibility_card.pack(fill="x", pady=(4, 0))

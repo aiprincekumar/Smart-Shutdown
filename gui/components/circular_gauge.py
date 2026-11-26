@@ -1,12 +1,13 @@
 ﻿# -*- coding: utf-8 -*-
 """
-gui.components.circular_gauge: Modular 240x240 Circular Countdown Gauge Component.
+gui.components.circular_gauge: Modular 268x268 Circular Countdown Gauge Component.
 Features dual concentric rings: Master Shutdown Countdown (outer ring) and
 Physical User Inactivity Timer (inner ring), with high-contrast digital readout.
 Department 05 Frontend and Desktop Engineering Compliant (Rule 28 under 250 lines).
 Developer: Atul Verma (aiprincekumar / aiprincekumar010100@gmail.com)
 """
 
+from dataclasses import dataclass
 import math
 import tkinter as tk
 from typing import Optional, Any, Tuple
@@ -19,11 +20,69 @@ from gui.theme import (
 )
 
 
+@dataclass(frozen=True)
+class GaugeGeometry:
+    """Scaled geometry and typography parameters for CircularCountdownGauge."""
+
+    size: int
+    center: float
+    outer_bbox: Tuple[int, int, int, int]
+    outer_radius: float
+    outer_width: int
+    outer_cap_r: float
+    halo_width: int
+    inner_bbox: Tuple[int, int, int, int]
+    inner_radius: float
+    inner_width: int
+    inner_cap_r: float
+    clock_font: Tuple[str, int, str]
+    sub_font: Tuple[str, int, str]
+    label_pady: int
+
+
+def _build_gauge_geometry(size: int) -> GaugeGeometry:
+    """Compute proportional gauge ring geometry and fonts from target canvas size."""
+    canvas_size = max(120, int(size))
+    scale = canvas_size / 240.0
+    center = canvas_size / 2.0
+    outer_pad = round(16 * scale)
+    outer_width = max(2, round(10 * scale))
+    halo_width = max(4, round(16 * scale))
+    inner_pad = max(outer_pad + 12, round(28 * scale) + (1 if canvas_size > 240 else 0))
+    inner_width = max(3, round(4.4 * scale))
+    return GaugeGeometry(
+        size=canvas_size,
+        center=center,
+        outer_bbox=(outer_pad, outer_pad, canvas_size - outer_pad, canvas_size - outer_pad),
+        outer_radius=center - outer_pad,
+        outer_width=outer_width,
+        outer_cap_r=outer_width / 2.0,
+        halo_width=halo_width,
+        inner_bbox=(inner_pad, inner_pad, canvas_size - inner_pad, canvas_size - inner_pad),
+        inner_radius=center - inner_pad,
+        inner_width=inner_width,
+        inner_cap_r=inner_width / 2.0,
+        clock_font=(FONT_CLOCK[0], max(12, round(FONT_CLOCK[1] * scale)), FONT_CLOCK[2]),
+        sub_font=(FONT_BADGE[0], max(8, round(FONT_BADGE[1] * scale)), FONT_BADGE[2]),
+        label_pady=max(1, round(1.5 * scale)),
+    )
+
+
+def _compute_cap_ovals(
+    center: float, radius: float, cap_r: float, extent: float
+) -> Tuple[Tuple[float, float, float, float], Tuple[float, float, float, float]]:
+    """Compute start (12 o'clock) and dynamic end cap oval bounding boxes."""
+    start_box = (center - cap_r, center - radius - cap_r, center + cap_r, center - radius + cap_r)
+    rad = math.radians(90 - extent)
+    ex, ey = center + radius * math.cos(rad), center - radius * math.sin(rad)
+    return start_box, (ex - cap_r, ey - cap_r, ex + cap_r, ey + cap_r)
+
+
 class CircularCountdownGauge(tk.Frame):
     """
-    240x240 multi-layer concentric dual-ring countdown gauge.
-    Outer Ring: Master Shutdown Countdown (10px stroke, 16px glowing halo).
-    Inner Ring: Physical User Inactivity Timer (4px stroke, dynamic color).
+    268x268 multi-layer concentric dual-ring countdown gauge.
+    Outer Ring: Master Shutdown Countdown (11px stroke, 18px glowing halo at 268px).
+    Inner Ring: Physical User Inactivity Timer (5px stroke at 268px, dynamic color).
     Center: High-contrast digital countdown clock, status subtitle, and inactivity readout.
     """
 
@@ -32,43 +91,30 @@ class CircularCountdownGauge(tk.Frame):
         "cap", "cap_outer", "arc_inner", "cap_inner",
     )
 
-    def __init__(self, parent: tk.Widget, **kwargs: Any):
+    def __init__(self, parent: tk.Widget, size: int = 268, **kwargs: Any):
         super().__init__(parent, bg=BG_BASE, highlightthickness=0, bd=0, **kwargs)
+        self._geom = _build_gauge_geometry(size)
+        g = self._geom
         self.canvas = tk.Canvas(
-            self, width=240, height=240, bg=BG_BASE,
-            highlightthickness=0, bd=0
+            self, width=g.size, height=g.size, bg=BG_BASE, highlightthickness=0, bd=0,
         )
-        self.canvas.pack(anchor="center", pady=(2, 4))
-        self.canvas.create_oval(
-            16, 16, 224, 224, outline=TRACK_RING, width=10, tags=("track", "track_outer")
-        )
-        self.canvas.create_oval(
-            28, 28, 212, 212, outline="#181F2A", width=4, tags="track_inner"
-        )
+        self.canvas.pack(anchor="center", expand=True, pady=(2, 4))
+        self.canvas.create_oval(*g.outer_bbox, outline=TRACK_RING, width=g.outer_width, tags=("track", "track_outer"))
+        self.canvas.create_oval(*g.inner_bbox, outline="#181F2A", width=g.inner_width, tags="track_inner")
         self._build_center_labels()
         self.update_countdown(900, 900, False)
 
     def _build_center_labels(self) -> None:
         """Create centered digital clock, status subtitle, and inactivity readout."""
+        g = self._geom
         self.center_frame = tk.Frame(self.canvas, bg=BG_BASE)
-        self.lbl_clock = tk.Label(
-            self.center_frame, text="15:00", font=FONT_CLOCK,
-            fg=TEXT_PRIMARY, bg=BG_BASE
-        )
-        self.lbl_clock.pack(pady=(0, 1))
-        self.lbl_subtitle = tk.Label(
-            self.center_frame, text="MINUTES REMAINING", font=FONT_BADGE,
-            fg=TEXT_MUTED, bg=BG_BASE
-        )
-        self.lbl_subtitle.pack(pady=(0, 1))
-        self.lbl_inactivity = tk.Label(
-            self.center_frame, text="USER IDLE", font=FONT_BADGE,
-            fg="#94A3B8", bg=BG_BASE
-        )
+        self.lbl_clock = tk.Label(self.center_frame, text="15:00", font=g.clock_font, fg=TEXT_PRIMARY, bg=BG_BASE)
+        self.lbl_clock.pack(pady=(0, g.label_pady))
+        self.lbl_subtitle = tk.Label(self.center_frame, text="MINUTES REMAINING", font=g.sub_font, fg=TEXT_MUTED, bg=BG_BASE)
+        self.lbl_subtitle.pack(pady=(0, g.label_pady))
+        self.lbl_inactivity = tk.Label(self.center_frame, text="USER IDLE", font=g.sub_font, fg="#94A3B8", bg=BG_BASE)
         self.lbl_inactivity.pack()
-        self.center_win = self.canvas.create_window(
-            120, 120, window=self.center_frame, tags="center_win"
-        )
+        self.center_win = self.canvas.create_window(g.center, g.center, window=self.center_frame, tags="center_win")
 
     def _update_center_labels(
         self,
@@ -121,25 +167,20 @@ class CircularCountdownGauge(tk.Frame):
         extent = min(359.9, 360.0 * pct) if pct > 0 else 0.0
         if extent <= 0:
             return
+        g = self._geom
         arc_color, halo_color = self._resolve_outer_colors(remaining_sec, pct, is_paused)
         self.canvas.create_arc(
-            16, 16, 224, 224, start=90, extent=-extent,
-            style="arc", width=16, outline=halo_color, tags=("halo", "halo_outer"),
+            *g.outer_bbox, start=90, extent=-extent,
+            style="arc", width=g.halo_width, outline=halo_color, tags=("halo", "halo_outer"),
         )
         self.canvas.create_arc(
-            16, 16, 224, 224, start=90, extent=-extent,
-            style="arc", width=10, outline=arc_color, tags=("arc", "arc_outer"),
+            *g.outer_bbox, start=90, extent=-extent,
+            style="arc", width=g.outer_width, outline=arc_color, tags=("arc", "arc_outer"),
         )
-        self.canvas.create_oval(
-            115, 11, 125, 21, fill=arc_color, outline="", tags=("cap", "cap_outer")
-        )
-        rad = math.radians(90 - extent)
-        ex = 120 + 104 * math.cos(rad)
-        ey = 120 - 104 * math.sin(rad)
-        self.canvas.create_oval(
-            ex - 5, ey - 5, ex + 5, ey + 5,
-            fill=arc_color, outline="", tags=("cap", "cap_outer"),
-        )
+        for bbox in _compute_cap_ovals(g.center, g.outer_radius, g.outer_cap_r, extent):
+            self.canvas.create_oval(
+                *bbox, fill=arc_color, outline="", tags=("cap", "cap_outer"),
+            )
 
     def _draw_inner_ring(
         self, idle_sec: Optional[float], idle_threshold: Optional[float]
@@ -157,20 +198,15 @@ class CircularCountdownGauge(tk.Frame):
             inner_color = "#8B5CF6"
         else:
             inner_color = "#10B981"
+        g = self._geom
         self.canvas.create_arc(
-            28, 28, 212, 212, start=90, extent=-inner_extent,
-            style="arc", width=4, outline=inner_color, tags="arc_inner",
+            *g.inner_bbox, start=90, extent=-inner_extent,
+            style="arc", width=g.inner_width, outline=inner_color, tags="arc_inner",
         )
-        self.canvas.create_oval(
-            118, 26, 122, 30, fill=inner_color, outline="", tags="cap_inner"
-        )
-        inner_rad = math.radians(90 - inner_extent)
-        ix = 120 + 92 * math.cos(inner_rad)
-        iy = 120 - 92 * math.sin(inner_rad)
-        self.canvas.create_oval(
-            ix - 2, iy - 2, ix + 2, iy + 2,
-            fill=inner_color, outline="", tags="cap_inner",
-        )
+        for bbox in _compute_cap_ovals(g.center, g.inner_radius, g.inner_cap_r, inner_extent):
+            self.canvas.create_oval(
+                *bbox, fill=inner_color, outline="", tags="cap_inner",
+            )
 
     def update_countdown(
         self,

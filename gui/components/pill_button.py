@@ -42,7 +42,7 @@ class PillButton(tk.Button):
         super().__init__(
             parent, text=text, command=command, font=font, fg=fg, bg=parent_bg,
             activebackground=parent_bg, activeforeground=fg, relief="flat", bd=0,
-            highlightthickness=0, compound="center", cursor=cursor, **kwargs
+            highlightthickness=0, padx=0, pady=0, compound="center", cursor=cursor, **kwargs
         )
         self._render_pills(self._curr_w, self._curr_h)
         self._apply_photo(self._normal_photo)
@@ -239,7 +239,8 @@ class PillButton(tk.Button):
             return
         w, h = event.width, event.height
         if w > 20 and h > 20 and (abs(w - self._curr_w) > 2 or abs(h - self._curr_h) > 2):
-            self._render_pills(w, h)
+            target_h = h if abs(h - self._curr_h) > 2 else self._curr_h
+            self._render_pills(w, target_h)
             target = self._pressed_photo if self._is_pressed else (
                 self._hover_photo if self._is_hovered else self._normal_photo
             )

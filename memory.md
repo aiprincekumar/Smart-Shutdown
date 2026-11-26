@@ -1,4 +1,4 @@
-﻿﻿# Smart Shutdown - Project Memory Dossier
+﻿# Smart Shutdown - Project Memory Dossier
 
 > **Document Type:** Active Project Working Memory & Architectural State Manifest (Universal Rule 21 & 23)  
 > **Project Scope:** Smart Shutdown (`smart-shutdown` / `smart_shutdown`) - Intelligent Windows Power & Inactivity Daemon  
@@ -12,27 +12,28 @@
 
 > **Document Type:** Live Dynamic Execution State Machine Ledger  
 > **Active Project:** `Smart Shutdown` (Workspace path: `c:\Users\Atul Verma\Desktop\Smart Shutdown`)  
-> **Active Task ID:** `TASK-README-ENHANCE-002` (README UI Preview, Troubleshooting FAQ, Contributing & Governance)  
-> **Authorization Token:** `AUTH-MGR-20261126-README-ENHANCE-001`  
-> **Current Gate State:** `COMPLETED` (`README.md` Enhanced + 5-Tier `changes_log/` + `memory.md` + Local Commit)  
-> **Test Status:** `README.md` `< 22 KB` (`BOM=False`/`LF`/Anchors `PASS`) | `rules:check` **22/22** | `gitleaks` **0** | `settings.json` untracked (`1,412` B) | PID `10280` kept  
-> **Status:** `COMPLETED` (Committed locally on offline `master`; zero remote push; live daemon `PID 10280`, `smart_shutdown.lock`, `logs/smart_shutdown.log`, and `smart_shutdown_settings.json` preserved)  
+> **Active Task ID:** `TASK-DASHBOARD-LEFT-LAYOUT-001` (Dashboard Left-Column Gauge Enlargement & Action Pill Compaction)  
+> **Authorization Token:** `AUTH-MGR-20261126-DASHBOARD-LEFT-QA-003`  
+> **Current Gate State:** `COMPLETED` (Phase 1 QA PASS + 5-Tier `changes_log/` + `memory.md` + Local Commit (`origin/master: ahead 1`; push blocked exit 128))  
+> **Test Status:** Offscreen Tk `780x520` & `720x500` **PASS** (`268x268` gauge, `36px` pills, `tw<bw`) | Rule 28 **PASS** | `rules:check` **22/22** | `gitleaks` **0** | `PID 10280` kept until server restart `07:40:54`  
+> **Status:** `COMPLETED` (Committed locally on `master` [`origin/master: ahead 1`]; remote push blocked (`exit 128`: interactive GitHub credential prompt disabled); `PID 10280` ran undisturbed through implementation/QA until workspace server restart at `07:40:54` (no longer present afterward); `smart_shutdown.lock`, `logs/smart_shutdown.log`, and untracked `smart_shutdown_settings.json` preserved)  
 > **Sub Manager Heartbeat:** HEALTHY (Continuous Passive Lifecycle Monitor)
 
-### 0.0 Last Completed Milestone: README Enhancement (`TASK-README-ENHANCE-002`)
-1. **README Showcase, Troubleshooting, Contributing & Governance (`AUTH-MGR-20261126-README-ENHANCE-001`):**
-   - Verified symbols across `scripts/06_cancel_or_exit_monitor.py`, `core/{startup,settings_store}.py`, and `gui/components/{mini_overlay,title_bar,dashboard_view}.py`.
-   - Added plain-ASCII ToC/headings for `UI Preview & Visual Layout` (`780x520` cockpit + `220x65` Mini HUD ASCII boxes, `04`/`08`/`09` previews, zero broken images), `Troubleshooting & FAQ` (5-path Python/`--no-pause`, `Smart_Shutdown.lnk` + `reconcile_startup_shortcut`, inhibitors, `06`/`shutdown /a` fallback, `_recover_from_backup`), and `Contributing Guidelines` (Rule 28, `.gitattributes`, `-B`/preview/`rules:check`/`gitleaks` checklist); validated `< 22 KB`, `< 500` lines, `BOM=False`, `LF`, and GitHub-slugger anchors.
-   - Updated `memory.md` (`S.No 021`, `< 16 KB`, `BOM=True`, `LF`), 5-tier `changes_log/` (`CHG-20261126-009`), passed pre-commit checks, committed locally, and synced global `memory.md`.
+### 0.0 Last Completed Milestone: Dashboard Left-Column Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`)
+1. **Gauge Scaling, Pill Compaction & Independent QA (`AUTH-MGR-20261126-DASHBOARD-LEFT-QA-003`):**
+   - Enlarged `CircularCountdownGauge` (`gui/components/circular_gauge.py`, `232` lines) from `240x240` to `268x268` via `GaugeGeometry`, `_build_gauge_geometry()`, and `_compute_cap_ovals()` (`outer_bbox=(18,18,250,250)` `11px`/`18px` halo, `inner_bbox=(32,32,236,236)` `5px`, `36pt`/`9pt` local fonts; `FONT_BADGE` untouched at `8pt`).
+   - Compacted `DashboardView._build_action_grid` (`gui/components/dashboard_view.py`, `372` lines) to `expand=False`, `weight=0`, `padx=2`, `5/6/6` column weights (`btn_w=90/110`), `height=36`, `corner_radius=10`, `sticky="ew"`, and added `padx=0, pady=0` + height-drift guard in `PillButton` (`gui/components/pill_button.py`, `247` lines) with `0` edits to `right_col`.
+   - Certified offscreen Tk layout across `780x520`, `780x520->720x500`, and `fresh_720x500`, logged `CHG-20261126-010`, updated `memory.md` (`S.No 022`) & global `memory.md`, and committed locally on `master` [`origin/master: ahead 1`] (remote push blocked exit 128: interactive GitHub credential prompt disabled).
 
 ### 0.1 Historical Certified Milestones (Concise Archive)
-1. **Public GitHub Polish (`TASK-PUBLIC-GITHUB-POLISH-001`):** Upgraded `README.md` (`18853f2`, `7c6733b`; `33` app targets), tracked `requirements`/`LICENSE`/`.gitattributes`, un-BOMmed `launchers/*.bat`, untracked `smart_shutdown_settings.json`, normalized `LF`s, `CHG-20261126-008`.
-2. **Direct GUI & History Reset (`TASK-BAT-DIRECT-GUI-001`, `TASK-GIT-HISTORY-RESET-001`):** Audited `10/10` `launchers/*.bat`, rewrote `Smart_Shutdown.bat` (`BOM=False`, `CRLF`, `--gui`/`FORWARD_ARGS`), reset local history (`631452b` -> `f590b64`), `CHG-20261126-006`/`007`.
-3. **Pre-GitHub Cleanup (`TASK-PRE-GITHUB-CLEANUP-001`):** Removed `tests/` (36), `temp_prompt/` (110), `archive/` (3), mocks, `.bak`, caches & old log; hardened `.gitignore`; `CHG-20261126-005`.
-4. **Live 15m/60s & Sim 5m/60s (`TASK-LIVE-15M-SIM-5M-60S-001`):** Set `DEFAULT_SIMULATION_SECONDS = 300`, aligned Live `15m`/`60s`, scoped `10s` to Demo, synced `.json`/`.lnk`; **346/346 PASS**, `CHG-20261126-004`.
-5. **3-State & Sim Parity (`TASK-STATUS-3STATE-AND-RUNNING-SYNC-001`, `TASK-SIMULATION-1MIN-DEFAULT-001`, `TASK-STATUS-IDLE-DEFAULT-FIX-001`):** Split `RUNNING` vs `Idle`/`Active`/`Away`, `resolve_mode_duration_seconds()`, `has_user_input`; **346/346 PASS**, `CHG-20261126-001`..`003`.
-6. **Status Unification & Persistence (`TASK-STATUS-DISPLAY-SYNC-FIX-001`, `TASK-MINI-HUD-SHUTDOWN-PERSISTENCE-001`):** Unified 5 GUI surfaces (`338/338`), `core/settings_store.py` (`fsync`+`.bak`), `mini_hud_on_startup=True`, `reconcile_startup_shortcut` (`337/337`), `CHG-20261125-004`/`005`.
-7. **Rename & Audit (`TASK-POST-RENAME-VERIFICATION-001`..`TASK-STARTUP-HUD-001`):** Smart Shutdown rename & `.lnk` (`311/311`), decoupled 6 modules + lazy barrels (`302/302`), `withdraw()` (`273/273`), dual timers (`257/257`), Live default (`226/226`), `CHG-20261125-001`..`003`.
+1. **README Showcase & FAQ (`TASK-README-ENHANCE-002`):** Added `UI Preview & Visual Layout`, `Troubleshooting & FAQ`, and `Contributing Guidelines` (`< 22 KB`, anchors PASS, `CHG-20261126-009`).
+2. **Public GitHub Polish (`TASK-PUBLIC-GITHUB-POLISH-001`):** Upgraded `README.md` (`18853f2`, `7c6733b`; `33` app targets), tracked `requirements`/`LICENSE`/`.gitattributes`, un-BOMmed `launchers/*.bat`, untracked `smart_shutdown_settings.json`, normalized `LF`s, `CHG-20261126-008`.
+3. **Direct GUI & History Reset (`TASK-BAT-DIRECT-GUI-001`, `TASK-GIT-HISTORY-RESET-001`):** Audited `10/10` `launchers/*.bat`, rewrote `Smart_Shutdown.bat` (`BOM=False`, `CRLF`, `--gui`/`FORWARD_ARGS`), reset local history (`631452b` -> `f590b64`), `CHG-20261126-006`/`007`.
+4. **Pre-GitHub Cleanup (`TASK-PRE-GITHUB-CLEANUP-001`):** Removed `tests/` (36), `temp_prompt/` (110), `archive/` (3), mocks, `.bak`, caches & old log; hardened `.gitignore`; `CHG-20261126-005`.
+5. **Live 15m/60s & Sim 5m/60s (`TASK-LIVE-15M-SIM-5M-60S-001`):** Set `DEFAULT_SIMULATION_SECONDS = 300`, aligned Live `15m`/`60s`, scoped `10s` to Demo, synced `.json`/`.lnk`; **346/346 PASS**, `CHG-20261126-004`.
+6. **3-State & Sim Parity (`TASK-STATUS-3STATE-AND-RUNNING-SYNC-001`, `TASK-SIMULATION-1MIN-DEFAULT-001`, `TASK-STATUS-IDLE-DEFAULT-FIX-001`):** Split `RUNNING` vs `Idle`/`Active`/`Away`, `resolve_mode_duration_seconds()`, `has_user_input`; **346/346 PASS**, `CHG-20261126-001`..`003`.
+7. **Status Unification & Persistence (`TASK-STATUS-DISPLAY-SYNC-FIX-001`, `TASK-MINI-HUD-SHUTDOWN-PERSISTENCE-001`):** Unified 5 GUI surfaces (`338/338`), `core/settings_store.py` (`fsync`+`.bak`), `mini_hud_on_startup=True`, `reconcile_startup_shortcut` (`337/337`), `CHG-20261125-004`/`005`.
+8. **Rename & Audit (`TASK-POST-RENAME-VERIFICATION-001`..`TASK-STARTUP-HUD-001`):** Smart Shutdown rename & `.lnk` (`311/311`), decoupled 6 modules + lazy barrels (`302/302`), `withdraw()` (`273/273`), dual timers (`257/257`), Live default (`226/226`), `CHG-20261125-001`..`003`.
 
 ---
 
@@ -132,6 +133,7 @@ Smart Shutdown/ (Product: Smart Shutdown)
 | 019 | `Smart_Shutdown.bat` (`TASK-BAT-DIRECT-GUI-001`) | BOM prefix error, `:menu`/`0..7`, `:end` `pause` | Rewrite `BOM=False`/`CRLF`, `--gui`/`FORWARD_ARGS`, audit 10 launchers | Instant direct GUI & clean CLI exit | Direct GUI | `--help`/`--startup-status` 0, `rules:check` 22/22 |
 | 020 | Public Repo Polish (`TASK-PUBLIC-GITHUB-POLISH-001`) | Stale README, missing packaging/EOL rules, tracked local config | Upgrade `README.md`, track `requirements`/`LICENSE`/`.gitattributes`, untrack settings, `LF` EOLs | Public GitHub-ready repo; PID `10280` kept | Polish | `ls-files --eol`, `rules:check` 22/22, `gitleaks` 0 |
 | 021 | README Showcase & FAQ (`TASK-README-ENHANCE-002`) | Lacked ASCII UI layout preview, Troubleshooting FAQ, and Contributing guide | Verify code facts; add `UI Preview`, `Troubleshooting & FAQ`, `Contributing`; validate GitHub slugs & `< 22 KB`; log `CHG-20261126-009` | Self-service onboarding, exact anchors & clean docs | Docs | Anchors PASS, `< 22 KB`, `rules:check` 22/22, `gitleaks` 0 |
+| 022 | Dashboard Left Layout (`TASK-DASHBOARD-LEFT-LAYOUT-001`) | `240px` gauge left vertical slack; `expand=True` & `tk.Button` pad ratcheted pills `36->42px`; uniform cols clipped `Shutdown Now` at `720x500` | `GaugeGeometry(268)`, `5/6/6` cols (`90/110`), `height=36`, `padx=0, pady=0`, `_on_configure` height-drift guard | Balanced `268x268` gauge + exact `36px` pills (`tw<bw`) at `780x520` & `720x500`; `right_col` untouched | Phases 1-2 & QA | Offscreen Tk PASS, Rule 28 PASS, `rules:check` 22/22, `gitleaks` 0 |
 
 ---
 

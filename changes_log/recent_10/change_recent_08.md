@@ -1,25 +1,27 @@
-﻿# Detailed Change Entry: CHG-20261126-001
+﻿# Detailed Change Entry: CHG-20261126-002
 
-> **Change ID:** `CHG-20261126-001`  
-> **Timestamp:** `2026-11-26 01:24:00`  
+> **Change ID:** `CHG-20261126-002`  
+> **Timestamp:** `2026-11-26 01:40:00`  
 > **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)  
-> **Target Scope:** `status-idle-default-fix-qa-and-governance`  
-> **Initiative:** `TASK-STATUS-IDLE-DEFAULT-FIX-001`  
-> **Authorization Tokens:** `AUTH-MGR-20261126-SIDF-QA-001`  
+> **Target Scope:** `simulation-mode-1min-default-phases-1-to-3`  
+> **Initiative:** `TASK-SIMULATION-1MIN-DEFAULT-001`  
+> **Authorization Tokens:** `AUTH-MGR-20261126-SIM60-QA-001`  
 > **Governing Standards:** Universal Rule 1 (Supreme CEO), Rule 5 & 8 (UTF-8 BOM), Rule 6 (5-Tier Changes Log), Rule 12 (DevOps & Release), Rule 15 (Git Gatekeeper), Rule 16 (Developer Profile), Rule 20 (Diagnostic Matrix), Rule 21 & 23 (Project Memory Dossier), Rule 22 (Ephemeral Pruning), Rule 27 (Rules Health Sentinel), Rule 28 (Code Modularity)
 
 ---
 
 ## 📋 1. Purpose & Architectural Rationale
 
-Default startup and no-timer status to `Idle` with 3-state `Idle` / `Active` / `Away` synchronization across `SentinelCoordinator`, `status_resolver`, all GUI surfaces, and regression test suites under `TASK-STATUS-IDLE-DEFAULT-FIX-001`:
-1. **Core Coordinator & Event Bridge (`core/coordinator.py`, `gui/app_event_bridge.py`):**
-   - Emitted `has_user_input` in coordinator telemetry snapshots and propagated `has_user_input` across the GUI event bridge so startup / no-input states resolve to `Idle` while active input transitions cleanly to `Active` and countdown/threshold expiry transitions to `Away`.
-2. **SSOT Status Resolver & All GUI Surfaces (`gui/components/status_resolver.py`, `title_bar.py`, `mini_overlay.py`, `circular_gauge.py`, `dashboard_view.py`, `telemetry_view.py`, `gui/unified_app.py`):**
-   - Updated `resolve_sentinel_pill_state`, `resolve_presence_phase`, `resolve_input_card_status`, and `resolve_input_activity_state` to support 3-state `Idle` / `Active` / `Away` (plus `AUDIO` override) parity across `TitleBarComponent`, `FloatingMiniOverlay`, `CircularCountdownGauge`, `DashboardView`, `TelemetryView`, and `UnifiedSentinelApp`.
-3. **Regression Tests & Independent QA Certification (`tests/test_status_display_sync.py`, `test_dynamic_status_pills.py`, `test_dual_timers.py`, `test_telemetry_sparklines.py`, `test_title_bar_cluster.py`):**
-   - Aligned and expanded unit/contract assertions for 3-state `Idle` -> `Active` -> `Away` transitions.
-   - Independent Level 4 QA (`AUTH-MGR-20261126-SIDF-QA-001`) certified **346/346 PASSED** (`python -m unittest discover -s tests -v`, `40.468s`, Exit Code 0), **14/14** Rule 28 & UTF-8 BOM (`< 24,576` bytes, `< 500` lines), **22/22** `npm run rules:check`, and **0** `gitleaks` leaks.
+Update **Simulation Mode** (`TargetMode.SIMULATION`) default countdown timing in **Smart Shutdown** from inheriting the 15-minute (`900s`) Live timer to **1 minute (`60` seconds)** with configurable persistence and fast-test parity under `TASK-SIMULATION-1MIN-DEFAULT-001`:
+1. **Core Models, Config & CLI (`core/models.py`, `core/config.py`, `smart_shutdown.py`):**
+   - Added `DEFAULT_SIMULATION_SECONDS = 60` and `resolve_mode_duration_seconds(mode, master_shutdown_timer_min, simulation_timer_sec)` SSOT helper in `core/models.py` (consumed by `core/coordinator.py` and `gui/app_event_bridge.py`).
+   - Added `simulation_timer_sec: int = DEFAULT_SIMULATION_SECONDS` (clamped `10..3600`, serialized via `to_dict()` / `from_dict()`) to `SettingsConfig` in `core/config.py`.
+   - Scoped `--countdown` in `smart_shutdown.py` so `--dry-run` or `execution_mode == "Simulation"` sets `cfg.simulation_timer_sec` without overwriting Live `cfg.master_shutdown_timer_min`.
+2. **Settings UI & Deck Parity (`gui/components/settings_view.py`, `gui/components/settings_deck.py`, `gui/settings_window.py`):**
+   - Added `Simulation Duration (seconds)` slider (`10..900s`, `var_sim_timer`) and `'1m simulation'` subtitle in `SettingsView`, and preserved `simulation_timer_sec` in `SettingsDeck` and `SettingsWindow`.
+3. **Regression Tests & Independent QA Certification (`tests/`):**
+   - Aligned and expanded 10 test suites (`test_combined_gui_health_audit.py`, `test_coordinator.py`, `test_core_gui_sync_contracts.py`, `test_demo_mode_lifecycle_parity.py`, `test_input_hook_coordinator.py`, `test_integration.py`, `test_mini_hud_cancel_behavior.py`, `test_mode_switching_parity.py`, `test_settings_view.py`, `test_unified_gui.py`) for `60s` default, `10s` fast-test inactivity/grace timings, and custom `simulation_timer_sec`.
+   - Independent Level 4 QA (`AUTH-MGR-20261126-SIM60-QA-001`) certified **346/346 PASSED** (`python -m unittest discover -s tests -v`, `44.506s`, Exit Code 0), **19/19** Rule 28 & UTF-8 BOM (`< 24,576` bytes, `< 500` lines), **22/22** `npm run rules:check`, and **0** `gitleaks` leaks.
 
 ---
 
@@ -27,16 +29,16 @@ Default startup and no-timer status to `Idle` with 3-state `Idle` / `Active` / `
 
 | S.No | File / Scope | Root Cause | Proposed Fix | Post-Fix Impact | Phase # | Test Gate |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | `core/coordinator.py`, `gui/components/status_resolver.py`, `gui/app_event_bridge.py` | Startup and no-timer states defaulted to `Active` instead of `Idle` without tracking `has_user_input` | Emit `has_user_input` from coordinator and resolve 3-state `Idle` / `Active` / `Away` in `status_resolver.py` & `app_event_bridge.py` | Accurate `Idle` default on startup/no-input and deterministic `Idle -> Active -> Away` transitions | Phase 1–2 | `test_status_display_sync.py`, `test_dual_timers.py` (PASS) |
-| 2 | `gui/components/title_bar.py`, `mini_overlay.py`, `circular_gauge.py`, `dashboard_view.py`, `telemetry_view.py`, `gui/unified_app.py` | GUI components lacked unified 3-state `Idle`/`Active`/`Away` synchronization | Synchronize all 6 GUI surfaces to `status_resolver` 3-state output | 100% status parity across TitleBar, Mini HUD, Circular Gauge, Dashboard, Telemetry, and Unified App | Phase 2 | `test_dynamic_status_pills.py`, `test_telemetry_sparklines.py`, `test_title_bar_cluster.py` (PASS) |
-| 3 | `tests/*`, `memory.md`, `changes_log/`, `temp_prompt/status_idle_default_fix/` | QA certification, Rule 28/BOM audit, 5-tier changelog, memory sync, and ephemeral cleanup required | Certify `346/346` tests, audit 14 files, record `CHG-20261126-001`, sync `memory.md`, prune `temp_prompt/status_idle_default_fix/`, commit locally | Grade A+ verified, zero-drift memory, clean offline repo | QA & Gov | `346/346` unittest (`40.468s`), `22/22` rules:check, `0` leaks |
+| 1 | `core/models.py`, `core/config.py`, `smart_shutdown.py` | `TargetMode.SIMULATION` inherited `master_shutdown_timer_min * 60` (`900s`) without dedicated `simulation_timer_sec` or scoped `--countdown` override | Add `DEFAULT_SIMULATION_SECONDS = 60`, `resolve_mode_duration_seconds()`, `SettingsConfig.simulation_timer_sec`, and scoped `--countdown` logic | Deterministic `60s` Simulation default with configurable persistence (`10..3600s`) and isolated Live timer | Phase 1 | `test_combined_gui_health_audit.py`, `test_coordinator.py` (PASS) |
+| 2 | `gui/components/settings_view.py`, `settings_deck.py`, `gui/settings_window.py` | Settings UI lacked a Simulation Duration slider, `'1m simulation'` subtitle, and `simulation_timer_sec` forwarding | Add `Simulation Duration (seconds)` slider (`10..900s`), update subtitle, and forward `simulation_timer_sec` in `SettingsDeck`/`SettingsWindow` | Full GUI configurability and zero-drift persistence across all settings panels | Phase 1 | `test_settings_view.py`, `test_core_gui_sync_contracts.py` (PASS) |
+| 3 | `tests/*`, `CHANGELOG.md`, `memory.md`, `changes_log/`, `temp_prompt/simulation_mode_1min_default/` | Test suites asserted `15m` dry-run defaults; QA certification, 5-tier changelog, memory sync, and ephemeral cleanup required | Align 10 test suites, certify `346/346` tests, audit 19 files for Rule 28/BOM, record `CHG-20261126-002`, sync `memory.md`, prune `temp_prompt/simulation_mode_1min_default/`, commit locally | Grade A+ verified, zero-drift memory, clean offline repo | Phases 2–3 | `346/346` unittest (`44.506s`), `22/22` rules:check, `0` leaks |
 
 ---
 
 ## 🧪 3. Verification & Test Gate Proof
 
-- **Master Test Suite:** `346/346` tests PASSED (`python -m unittest discover -s tests -v`, `40.468s`, Exit Code `0`).
-- **Rule 28 & UTF-8 BOM Audit:** `14/14` modified `.py` files verified with UTF-8 BOM (`0xEF,0xBB,0xBF`), `< 24,576` bytes, and `< 500` lines.
+- **Master Test Suite:** `346/346` tests PASSED (`python -m unittest discover -s tests -v`, `44.506s`, Exit Code `0`).
+- **Rule 28 & UTF-8 BOM Audit:** `19/19` scoped `.py` & `CHANGELOG.md` files (plus all updated `.md` files) verified with UTF-8 BOM (`0xEF,0xBB,0xBF`), `< 24,576` bytes, and `< 500` lines.
 - **Rules Health Sentinel (`npm run rules:check`):** `22/22` canonical rules verified. Exit Code `0`.
-- **Gitleaks Secret Audit (`gitleaks detect --redact --no-git`):** `0` leaks detected. Exit Code `0`.
-- **Ephemeral Prune:** `temp_prompt/status_idle_default_fix/` removed; `temp_prompt/simulation_mode_1min_default/` preserved untouched.
+- **Gitleaks Secret Audit (`gitleaks detect --redact`):** `0` leaks detected (`199` commits scanned). Exit Code `0`.
+- **Ephemeral Prune:** `temp_prompt/simulation_mode_1min_default/` removed cleanly per Rule 22.

@@ -2,6 +2,15 @@
 
 > **Archive Index:** Entries from `2026-11-01` to `2026-11-24` (`CHG-20261101-001` .. `CHG-20261124-006`) archived in [`master_changes_log_archive_2026-11.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/master/master_changes_log_archive_2026-11.md).
 
+## [CHG-20261126-010] - 2026-11-26 06:58:36
+- **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
+- **Entry File:** [`change_CHG-20261126-010_06-58-36.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-010_06-58-36.md)
+- **Target Scope:** `gui/components/circular_gauge.py`, `gui/components/dashboard_view.py`, `gui/components/pill_button.py`
+- **Summary:** Enlarged left-column `CircularCountdownGauge` to `268x268` (`GaugeGeometry`, `36pt`/`9pt` fonts) and locked 2x3 `PillButton` grid to `36px` height (`5/6/6` columns, `padx=0, pady=0`, height-drift guard, `0` edits to `right_col`); synced `memory.md` (`S.No 022`), 5-tier logs, and committed locally on `master` [`origin/master: ahead 1`], remote push blocked (`exit 128`: interactive GitHub credential prompt disabled); `PID 10280` undisturbed until server restart at `07:40:54`.
+- **Verification:** `py_compile`/`--help` PASS, offscreen Tk (`780x520` & `720x500`) PASS, Rule 28 PASS, `rules:check` 22/22, `gitleaks` 0 leaks.
+
+---
+
 ## [CHG-20261126-009] - 2026-11-26 03:43:00
 - **Author:** Atul Verma (`aiprincekumar` / `aiprincekumar010100@gmail.com`)
 - **Entry File:** [`change_CHG-20261126-009_03-43-00.md`](file:///c:/Users/Atul%20Verma/Desktop/Smart%20Shutdown/changes_log/entries/2026-11-26/change_CHG-20261126-009_03-43-00.md)
