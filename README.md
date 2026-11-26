@@ -4,6 +4,7 @@
 
 **Intelligent Windows 10/11 inactivity daemon, Antigravity AI session sentinel, hardware/audio inhibitor engine, and Fluent Dark power cockpit.**
 
+[![Download Windows Installer](https://img.shields.io/badge/Download-Windows%20Installer%20v1.0.0-06B6D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/aiprincekumar/Smart-Shutdown/releases/download/v1.0.0/Setup_Smart_Shutdown_v1.0.0.exe)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Platform Windows 10/11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white)](#prerequisites)
 [![UI Tkinter Fluent Dark](https://img.shields.io/badge/UI-Tkinter%20Fluent%20Dark-06B6D4?style=for-the-badge)](#gui-tabs--controls-guide)
@@ -88,6 +89,12 @@
 ---
 
 ## Quick Start & Installation
+
+### Windows Installer (Recommended)
+
+- **Download:** [`Setup_Smart_Shutdown_v1.0.0.exe`](https://github.com/aiprincekumar/Smart-Shutdown/releases/download/v1.0.0/Setup_Smart_Shutdown_v1.0.0.exe) (`23.58 MB`, 64-bit Windows 10/11 — no Python required).
+- **Install:** Run the installer to set up `SmartShutdown.exe` with Start Menu shortcuts, optional Desktop icon, and optional Windows Startup (`--mini-hud`).
+- **Uninstall:** Clean, residue-free removal via **Windows Settings → Apps** or `unins000.exe`.
 
 ### Prerequisites
 
